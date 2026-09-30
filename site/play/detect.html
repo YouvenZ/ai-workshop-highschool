@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Object Detector · AI Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=JetBrains+Mono:wght@500&family=Outfit:wght@400;600;800&display=swap">
+<link rel="stylesheet" href="../css/theme.css">
+<style>
+  :root { --ar: 1.3333; --below: 110px; }
+  .lab { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 320px); gap: 14px; align-items: start; }
+  @media (max-width: 860px) { .lab { grid-template-columns: 1fr; } }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; min-height: 2.4em; }
+  .chip { padding: .35em .8em; border-radius: 999px; background: rgba(255,255,255,.1); border: 1px solid var(--stroke); font-weight: 700; animation: pop .3s cubic-bezier(.2,1.6,.4,1); }
+  @keyframes pop { from { transform: scale(.5); } }
+  .status { display: flex; gap: .5em; align-items: center; font-weight: 600; }
+  h3 { font-size: 1.05rem; margin: 0 0 .3rem; color: var(--muted); font-family: var(--font-body); font-weight: 600; }
+  .fps { font-family: var(--font-mono); color: var(--muted); font-size: .85rem; }
+  input[type=file] { display: none; }
+</style>
+</head>
+<body class="play">
+<div class="aurora"></div><canvas id="particles"></canvas>
+
+<header class="top">
+  <h1>🔍 <span class="grad">Object Detector</span></h1>
+  <a class="back" href="./">← all activities</a>
+</header>
+
+<main class="lab">
+  <section class="glass panel stack">
+    <canvas class="cam" id="view" width="640" height="480"></canvas>
+    <video id="video" playsinline muted style="display:none"></video>
+    <div class="row">
+      <button class="btn primary" id="start">🎥 Start camera</button>
+      <button class="btn" id="sample">🖼️ Sample</button>
+      <label class="btn" for="file">📁 Photo</label><input type="file" id="file" accept="image/*">
+      <div class="status" id="status"><span class="spinner"></span> Loading COCO-SSD (18 MB, knows 80 kinds of things)…</div>
+    </div>
+    <div class="notice hidden" id="msg"></div>
+  </section>
+
+  <aside class="glass panel stack">
+    <div>
+      <h3>I can see…</h3>
+      <div class="chips" id="chips"><span class="muted">nothing yet</span></div>
+    </div>
+    <div>
+      <h3>Only show when at least <span id="thVal" class="mono">50</span>% sure</h3>
+      <input type="range" id="th" min="10" max="90" value="50">
+    </div>
+    <div class="fps" id="fps"></div>
+    <div class="notice" style="border-color:var(--cyan);background:rgba(34,228,255,.07)">
+      This model learned from <b>200 000+ photos</b> where people drew boxes by hand — just like you did in the Box Labeller.
+      Try: a phone 📱, a bottle 🍾, a cup ☕, a book 📖, scissors ✂️, a backpack 🎒.
+    </div>
+    <div class="notice" style="border-color:var(--pink);background:rgba(255,79,216,.07)">
+      🤔 Show it something that is <b>not</b> one of its 80 things. What does it say? An AI can only name what it was trained on.
+    </div>
+  </aside>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+<script src="../js/fx.js"></script>
+<script>
+(function () {
+  "use strict";
+  const view = document.getElementById("view"), ctx = view.getContext("2d");
+  const video = document.getElementById("video");
+  const statusEl = document.getElementById("status"), msg = document.getElementById("msg");
+  const EMO = { person: "🧍", "cell phone": "📱", bottle: "🍾", cup: "☕", book: "📖", scissors: "✂️", backpack: "🎒", laptop: "💻",
+    chair: "🪑", keyboard: "⌨️", mouse: "🖱️", tv: "📺", car: "🚗", cat: "🐱", dog: "🐶", bird: "🐦", clock: "🕒", banana: "🍌",
+    apple: "🍎", orange: "🍊", "teddy bear": "🧸", umbrella: "☂️", handbag: "👜", tie: "👔", "sports ball": "⚽", bicycle: "🚲",
+    "potted plant": "🪴", "dining table": "🍽️", remote: "📟", toothbrush: "🪥", vase: "🏺", bed: "🛏️", couch: "🛋️", bus: "🚌", truck: "🚚" };
+  const COLS = ["#22e4ff", "#ff4fd8", "#ffc53d", "#b6ff3b", "#8b5cff", "#ff5a6e"];
+  let model = null, camOn = false, still = null, th = 0.5, busy = false, lastT = 0, preds = [], lastKey = null;
+
+  function say(html, kind) { statusEl.innerHTML = html; statusEl.style.color = kind === "bad" ? "var(--red)" : kind === "ok" ? "var(--lime)" : ""; }
+  function notice(html) { msg.innerHTML = html; msg.classList.remove("hidden"); }
+  const colorFor = (cls) => COLS[[...cls].reduce((a, c) => a + c.charCodeAt(0), 0) % COLS.length];
+
+  function drawFrame() {
+    const W = view.width, H = view.height;
+    ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H);
+    if (camOn) { ctx.save(); ctx.translate(W, 0); ctx.scale(-1, 1); ctx.drawImage(video, 0, 0, W, H); ctx.restore(); }
+    else if (still) ctx.drawImage(still, 0, 0, W, H);
+  }
+  function drawBoxes() {
+    const sx = view.width / srcW(), sy = view.height / srcH();
+    for (const p of preds) {
+      let [x, y, w, h] = p.bbox; x *= sx; y *= sy; w *= sx; h *= sy;
+      if (camOn) x = view.width - x - w;
+      const col = colorFor(p.class);
+      ctx.save();
+      ctx.lineWidth = 4; ctx.strokeStyle = col; ctx.shadowColor = col; ctx.shadowBlur = 16;
+      ctx.strokeRect(x, y, w, h);
+      ctx.shadowBlur = 0;
+      const label = `${EMO[p.class] || "🔹"} ${p.class} ${Math.round(p.score * 100)}%`;
+      ctx.font = "700 20px Outfit, system-ui, sans-serif";
+      const tw = ctx.measureText(label).width + 14, ty = y > 28 ? y - 28 : y;
+      const tx = Math.max(0, Math.min(x - 2, view.width - tw));      // keep the tag on the canvas
+      ctx.fillStyle = col; ctx.fillRect(tx, ty, tw, 28);
+      ctx.fillStyle = "#0a0720"; ctx.fillText(label, tx + 7, ty + 20);
+      ctx.restore();
+    }
+  }
+  const srcW = () => (camOn ? video.videoWidth : still ? still.naturalWidth || still.width : view.width) || view.width;
+  const srcH = () => (camOn ? video.videoHeight : still ? still.naturalHeight || still.height : view.height) || view.height;
+
+  function chips() {
+    const n = {};
+    preds.forEach((p) => (n[p.class] = (n[p.class] || 0) + 1));
+    const key = Object.entries(n).sort().map(([k, v]) => k + v).join("|");
+    if (key === lastKey) return;
+    lastKey = key;
+    document.getElementById("chips").innerHTML = Object.keys(n).length
+      ? Object.entries(n).map(([k, v]) => `<span class="chip" style="border-color:${colorFor(k)}">${EMO[k] || "🔹"} ${v > 1 ? v + "× " : ""}${k}</span>`).join("")
+      : '<span class="muted">nothing I recognise…</span>';
+  }
+
+  async function detect(src) {
+    if (!model || busy) return;
+    busy = true;
+    const t0 = performance.now();
+    try {
+      preds = (await model.detect(src, 20, th));
+      document.getElementById("fps").textContent = `${Math.round(performance.now() - t0)} ms per look`;
+    } catch (e) { console.warn(e); }
+    busy = false;
+    chips();
+  }
+
+  function loop(t) {
+    requestAnimationFrame(loop);
+    if (!camOn && !still) return;
+    if (camOn && video.readyState < 2) return;
+    drawFrame(); drawBoxes();
+    if (camOn && t - lastT > 60) { lastT = t; detect(video); }
+  }
+
+  async function showStill(img) {
+    if (camOn) { FX.stopCamera(video); camOn = false; document.getElementById("start").textContent = "🎥 Start camera"; }
+    still = img;
+    const ar = (img.naturalWidth || img.width) / (img.naturalHeight || img.height);
+    view.width = 640; view.height = Math.round(640 / ar);
+    preds = []; lastKey = null; drawFrame();
+    if (!model) { FX.toast("The model is still downloading…"); return; }
+    await detect(img);
+    if (!preds.length) FX.toast("I don't see anything I was trained on 🤷");
+  }
+
+  document.getElementById("start").addEventListener("click", async (e) => {
+    msg.classList.add("hidden");
+    if (camOn) { FX.stopCamera(video); camOn = false; e.currentTarget.textContent = "🎥 Start camera"; return; }
+    try {
+      await FX.startCamera(video);
+      camOn = true; still = null; view.width = 640; view.height = 480;
+      e.currentTarget.textContent = "⏹️ Stop camera";
+    } catch (err) {
+      notice("📷 " + (err.friendly || err.message) + "<br><b>Plan B:</b> press 📁 to try it on any photo, or 🖼️ for the sample.");
+    }
+  });
+  document.getElementById("sample").addEventListener("click", () => FX.loadImage("../img/street.svg").then(showStill));
+  document.getElementById("file").addEventListener("change", async (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    try { await showStill(await FX.imageFromFile(f)); } catch (err) { FX.toast(err.message); }
+    e.target.value = "";
+  });
+  const thIn = document.getElementById("th");
+  thIn.addEventListener("input", () => { th = thIn.value / 100; document.getElementById("thVal").textContent = thIn.value; if (still) detect(still); });
+
+  // placeholder frame so the panel is never blank
+  ctx.fillStyle = "#0a0720"; ctx.fillRect(0, 0, view.width, view.height);
+  ctx.fillStyle = "#b7b0d8"; ctx.font = "600 26px Outfit, sans-serif"; ctx.textAlign = "center";
+  ctx.fillText("Press 🎥 Start camera — or try a 📁 photo", view.width / 2, view.height / 2);
+  ctx.textAlign = "start";
+
+  (async function boot() {
+    const ready = (m) => { model = m; msg.classList.add("hidden"); say("✅ Detector ready", "ok"); if (still) detect(still); };
+    let loading = null;
+    try {
+      await FX.need("tf"); await FX.need("cocoSsd");
+      const local = new URL("../models/coco-ssd-lite/model.json", location.href).href;
+      loading = cocoSsd.load({ base: "lite_mobilenet_v2", modelUrl: local })
+        .catch((err) => { console.warn("local COCO-SSD failed, trying online", err); return cocoSsd.load({ base: "lite_mobilenet_v2" }); });
+      ready(await FX.timeout(loading, 45000, "Downloading the detector"));
+    } catch (e) {
+      console.error(e);
+      say("❌ The detector couldn't load", "bad");
+      notice("🌐 " + e.message + "<br>This needs internet to download an 18 MB model. Reload once the wifi is back.");
+      if (loading) loading.then(ready).catch(() => {});   // slow wifi: still switch on if it arrives late
+    }
+  })();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

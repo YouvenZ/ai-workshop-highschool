@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI or Not? · AI Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=JetBrains+Mono:wght@500&family=Outfit:wght@400;600;800&display=swap">
+<link rel="stylesheet" href="../css/theme.css">
+<style>
+  .game { display: grid; gap: 14px; }
+  .zones { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .zone {
+    min-height: 190px; padding: 12px; border-radius: var(--radius);
+    border: 2px dashed var(--stroke); background: var(--glass);
+    transition: border-color .2s, background .2s, transform .2s;
+    display: flex; flex-direction: column; gap: 8px; cursor: pointer;
+  }
+  body.embedded .zone { min-height: 36vh; }
+  .zone h2 { font-size: clamp(1.2rem, 2.6vw, 1.8rem); margin: 0; display: flex; justify-content: space-between; align-items: center; }
+  .zone.ai h2  { color: var(--cyan); }
+  .zone.not h2 { color: var(--amber); }
+  .zone.hot.ai  { border-color: var(--cyan);  background: rgba(34,228,255,.12); transform: scale(1.01); }
+  .zone.hot.not { border-color: var(--amber); background: rgba(255,197,61,.12); transform: scale(1.01); }
+  .zone .cards { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .tray { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; min-height: 64px; padding: 10px; }
+  .card {
+    display: inline-flex; align-items: center; gap: .45em;
+    padding: .55em .9em; border-radius: 16px;
+    background: linear-gradient(160deg, rgba(255,255,255,.16), rgba(255,255,255,.06));
+    border: 1px solid var(--stroke); font-weight: 600; font-size: clamp(.95rem, 1.7vw, 1.15rem);
+    cursor: grab; user-select: none; -webkit-user-select: none; touch-action: none;
+    box-shadow: 0 6px 18px rgba(0,0,0,.35);
+    transition: box-shadow .2s, border-color .2s;
+    position: relative;
+  }
+  .card .emo { font-size: 1.5em; line-height: 1; }
+  .card.dragging { cursor: grabbing; z-index: 50; box-shadow: 0 18px 40px rgba(0,0,0,.6), var(--glow-pink); transition: none; }
+  .card.selected { border-color: var(--pink); box-shadow: var(--glow-pink); }
+  .card.placed { cursor: default; animation: pop .35s cubic-bezier(.2,1.6,.4,1); }
+  .card.right { border-color: var(--lime); box-shadow: 0 0 18px rgba(182,255,59,.45); }
+  .card.wrong { border-color: var(--red);  box-shadow: 0 0 18px rgba(255,90,110,.5); animation: shake .45s; }
+  .card .mark { font-size: 1.1em; }
+  @keyframes pop   { 0% { transform: scale(.6); } 100% { transform: scale(1); } }
+  @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+
+  .why { min-height: 3.2em; padding: .7em 1em; font-size: clamp(1rem, 1.8vw, 1.25rem); line-height: 1.35; }
+  .why b { font-family: var(--font-display); }
+  .score { font-family: var(--font-display); font-size: 1.3rem; }
+  .hint { text-align: center; }
+</style>
+</head>
+<body class="play">
+<div class="aurora"></div><canvas id="particles"></canvas>
+
+<header class="top">
+  <h1>🤖 <span class="grad">AI or Not?</span></h1>
+  <a class="back" href="./">← all activities</a>
+</header>
+
+<main class="game">
+  <div class="zones">
+    <section class="zone ai" data-zone="ai" aria-label="AI zone">
+      <h2><span>🧠 AI</span><span class="pill muted">learned from data</span></h2>
+      <div class="cards"></div>
+    </section>
+    <section class="zone not" data-zone="not" aria-label="Not AI zone">
+      <h2><span>⚙️ Not AI</span><span class="pill muted">follows fixed rules</span></h2>
+      <div class="cards"></div>
+    </section>
+  </div>
+
+  <div class="glass why" id="why"><span class="muted">Drag each card into a box — or tap a card, then tap a box.</span></div>
+
+  <div class="tray glass" id="tray"></div>
+
+  <div class="row" style="justify-content:space-between">
+    <span class="score" id="score">Score: 0 / 0</span>
+    <span class="row">
+      <button class="btn" id="reveal">👀 Reveal all</button>
+      <button class="btn primary" id="reset">🔄 Play again</button>
+    </span>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+<script src="../js/fx.js"></script>
+<script>
+(function () {
+  "use strict";
+  // ai: true means "learned from data". The explanation is what matters:
+  // it is always about WHERE the behaviour came from — rules or examples.
+  const CARDS = [
+    { e: "📧", t: "Spam filter",              ai: true,  why: "It learned what spam looks like from millions of emails people marked as spam." },
+    { e: "🧮", t: "Calculator",                ai: false, why: "Every button follows a rule a programmer wrote. 2 + 2 is never a guess." },
+    { e: "🎬", t: "Netflix recommendations",   ai: true,  why: "It learns from what you — and millions of people like you — watched and skipped." },
+    { e: "🔓", t: "Face unlock",               ai: true,  why: "A neural network learned what YOUR face looks like from a few scans." },
+    { e: "⏰", t: "Alarm clock",               ai: false, why: "It rings at the time you set. One rule, no learning." },
+    { e: "💬", t: "ChatGPT",                   ai: true,  why: "It learned patterns of language from a gigantic amount of text." },
+    { e: "🚦", t: "Traffic light timer",       ai: false, why: "Most switch on a fixed timer. (Some new 'smart' ones do use AI — trick question!)" },
+    { e: "🌍", t: "Google Translate",          ai: true,  why: "It learned to translate from millions of texts that exist in two languages." },
+    { e: "🚗", t: "Self-driving car",          ai: true,  why: "It learned to recognise roads, people and signs from millions of camera images." },
+    { e: "🌡️", t: "Thermostat",                ai: false, why: "IF colder than 20 °C THEN heat on. Pure rule." },
+    { e: "🤳", t: "Snapchat face filter",      ai: true,  why: "It finds your eyes, nose and mouth with a model trained on thousands of labelled faces." },
+    { e: "🔦", t: "Flashlight app",            ai: false, why: "Button pressed → light on. Nothing to learn." },
+  ];
+
+  const tray = document.getElementById("tray");
+  const why = document.getElementById("why");
+  const scoreEl = document.getElementById("score");
+  const zones = [...document.querySelectorAll(".zone")];
+  let score = 0, placed = 0, selected = null;
+
+  function render() {
+    tray.innerHTML = "";
+    zones.forEach((z) => (z.querySelector(".cards").innerHTML = ""));
+    score = 0; placed = 0; selected = null;
+    updateScore();
+    why.innerHTML = '<span class="muted">Drag each card into a box — or tap a card, then tap a box.</span>';
+    FX.shuffle(CARDS.slice()).forEach((c) => {
+      const el = document.createElement("div");
+      el.className = "card";
+      el.innerHTML = `<span class="emo">${c.e}</span><span>${c.t}</span>`;
+      el._card = c;
+      el.tabIndex = 0;
+      attachDrag(el);
+      tray.appendChild(el);
+    });
+  }
+
+  function updateScore() { scoreEl.textContent = `Score: ${score} / ${placed}` + (placed === CARDS.length ? "  🎉" : ""); }
+
+  function zoneAt(x, y) {
+    return document.elementsFromPoint(x, y).map((n) => n.closest && n.closest(".zone")).find(Boolean) || null;
+  }
+
+  function place(el, zone) {
+    if (!zone || el.classList.contains("placed")) return;
+    const c = el._card;
+    const guessAI = zone.dataset.zone === "ai";
+    const ok = guessAI === c.ai;
+    el.classList.remove("selected", "dragging");
+    el.style.transform = "";
+    el.classList.add("placed", ok ? "right" : "wrong");
+    el.insertAdjacentHTML("beforeend", `<span class="mark">${ok ? "✅" : "❌"}</span>`);
+    // A wrong card still moves to the CORRECT box, so the board ends up as the answer key.
+    const target = zones.find((z) => (z.dataset.zone === "ai") === c.ai);
+    target.querySelector(".cards").appendChild(el);
+    placed++; if (ok) score++;
+    updateScore();
+    why.innerHTML = `${ok ? "✅ <b>Yes!</b>" : "🤔 <b>Not quite.</b>"} ${c.e} <b>${c.t}</b> is <b class="${c.ai ? "c1" : "c3"}">${c.ai ? "AI" : "not AI"}</b> — ${c.why}`;
+    if (ok) {
+      const r = el.getBoundingClientRect();
+      FX.confetti({ particleCount: 40, spread: 55, origin: { x: (r.left + r.width / 2) / innerWidth, y: (r.top + r.height / 2) / innerHeight } });
+    }
+    if (placed === CARDS.length) {
+      setTimeout(() => {
+        FX.fireworks(1800);
+        why.innerHTML = `🏁 <b>${score} / ${CARDS.length}</b> — ${score >= 10 ? "AI expert! 🧠" : score >= 7 ? "Nice work! 👏" : "Tricky, right? That's the point. 😉"} &nbsp;The pattern: <b class="c1">AI learns from examples</b>, <b class="c3">normal programs follow rules</b>.`;
+      }, 400);
+    }
+  }
+
+  function attachDrag(el) {
+    let sx, sy, moved = false, active = false, hot = null;
+    el.addEventListener("pointerdown", (e) => {
+      if (el.classList.contains("placed")) return;
+      e.stopPropagation();
+      active = true; moved = false; sx = e.clientX; sy = e.clientY;
+      el.setPointerCapture(e.pointerId);
+    });
+    el.addEventListener("pointermove", (e) => {
+      if (!active) return;
+      e.stopPropagation();
+      const dx = e.clientX - sx, dy = e.clientY - sy;
+      if (!moved && Math.hypot(dx, dy) < 6) return;
+      moved = true;
+      el.classList.add("dragging");
+      el.style.transform = `translate(${dx}px, ${dy}px) rotate(${Math.max(-8, Math.min(8, dx / 25))}deg)`;
+      const z = zoneAt(e.clientX, e.clientY);
+      if (z !== hot) { hot && hot.classList.remove("hot"); hot = z; hot && hot.classList.add("hot"); }
+    });
+    const end = (e) => {
+      if (!active) return;
+      active = false;
+      hot && hot.classList.remove("hot"); hot = null;
+      if (!moved) { select(el); return; }
+      const z = zoneAt(e.clientX, e.clientY);
+      if (z) place(el, z);
+      else { el.classList.remove("dragging"); el.style.transition = "transform .3s"; el.style.transform = ""; setTimeout(() => (el.style.transition = ""), 300); }
+    };
+    el.addEventListener("pointerup", end);
+    el.addEventListener("pointercancel", end);
+    el.addEventListener("keydown", (e) => {
+      if (e.key === "1") place(el, zones[0]);
+      if (e.key === "2") place(el, zones[1]);
+    });
+  }
+
+  function select(el) {
+    if (selected) selected.classList.remove("selected");
+    selected = selected === el ? null : el;
+    if (selected) { selected.classList.add("selected"); why.innerHTML = `Now tap <b class="c1">🧠 AI</b> or <b class="c3">⚙️ Not AI</b> for ${el._card.e} <b>${el._card.t}</b>.`; }
+  }
+
+  zones.forEach((z) => z.addEventListener("click", () => { if (selected) { const s = selected; selected = null; place(s, z); } }));
+  document.getElementById("reset").addEventListener("click", render);
+  document.getElementById("reveal").addEventListener("click", () => {
+    [...tray.querySelectorAll(".card")].forEach((el) => {
+      const target = zones.find((z) => (z.dataset.zone === "ai") === el._card.ai);
+      el.classList.add("placed");
+      target.querySelector(".cards").appendChild(el);
+    });
+    why.innerHTML = "The pattern: <b class='c1'>AI learns from examples</b>, <b class='c3'>normal programs follow rules</b> someone wrote.";
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

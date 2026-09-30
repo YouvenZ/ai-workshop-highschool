@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Can a Computer Learn? · AI Workshop</title>
+<meta name="description" content="A one-hour, hands-on introduction to AI and machine learning for high-school students. Everything runs in the browser.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=JetBrains+Mono:wght@500&family=Outfit:wght@400;600;800&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+<link rel="stylesheet" href="css/theme.css">
+<link rel="stylesheet" href="css/deck.css">
+</head>
+<body>
+<div class="aurora"></div><canvas id="particles"></canvas>
+
+<div class="reveal">
+<div class="slides">
+
+<!-- ===================================================== 0:00 HOOK -->
+<section class="center" data-confetti>
+  <div class="title-orbit" aria-hidden="true">
+    <div class="ring">
+      <span style="left:50%;top:0">📸</span><span style="left:100%;top:50%">🎨</span>
+      <span style="left:50%;top:100%">🚗</span><span style="left:0;top:50%">💬</span>
+    </div>
+    <div class="core">🧠</div>
+  </div>
+  <h1><span class="grad">Can a computer learn?</span></h1>
+  <p class="lead">A one-hour, hands-on crash course in AI &amp; machine learning</p>
+  <aside class="notes">
+    0:00 — 1 min. Welcome. Don't explain anything yet. "In the next hour you will train three AIs yourselves — one with your drawings, one with your camera, and you'll label data like the people behind self-driving cars."
+    Check the projector shows the whole slide; press F for fullscreen. S opens this speaker view.
+  </aside>
+</section>
+
+<section class="center">
+  <p class="kicker">Hands up 🙋</p>
+  <h2>Who used <span class="grad">AI</span> today?</h2>
+  <div class="today">
+    <div class="glass fragment pop"><span class="e">🔓</span>Unlocked a phone with your face</div>
+    <div class="glass fragment pop"><span class="e">🎵</span>Got a song recommended</div>
+    <div class="glass fragment pop"><span class="e">🗺️</span>Checked traffic on a map</div>
+    <div class="glass fragment pop"><span class="e">📧</span>Didn't see any spam</div>
+  </div>
+  <p class="lead fragment">You probably used AI a dozen times before breakfast — without noticing.</p>
+  <aside class="notes">
+    0:01 — 2 min. Ask for hands first, THEN reveal the four cards one by one. Most hands go up by the end.
+    Point: AI isn't just robots and ChatGPT — it's hidden in everyday stuff. But what makes something "AI"? Let's find out with a game.
+  </aside>
+</section>
+
+<!-- ===================================================== 0:03 AI OR NOT -->
+<section class="act" data-prevent-swipe>
+  <div class="act-head">
+    <h2>🤖 <span class="grad">AI or Not?</span></h2>
+    <span class="muted">Drag each card. Shout your answer first!</span>
+    <span class="spacer"></span>
+    <button class="btn timer" data-sec="360"></button>
+    <a class="btn" href="play/ai-or-not.html" target="_blank" rel="noopener">↗ open</a>
+  </div>
+  <iframe class="frame" data-lazy="play/ai-or-not.html" title="AI or Not game"></iframe>
+  <aside class="notes">
+    0:03 — 6 min. Call students up to the screen (or let the room vote per card, you drag). Read each explanation aloud.
+    Traffic light is a trick card: most are timers, some new ones use AI. Face filters surprise people.
+    Land the rule on the final message: AI LEARNS FROM EXAMPLES, normal programs FOLLOW RULES someone wrote.
+    Keyboard: click in the game then arrows still change slides.
+  </aside>
+</section>
+
+<!-- ===================================================== 0:09 RULES VS LEARNING -->
+<section>
+  <p class="kicker">The big idea</p>
+  <h2>Rules vs. <span class="grad">learning</span></h2>
+  <div class="versus">
+    <div class="glass flow">
+      <h3 style="text-align:center">⚙️ Normal program</h3>
+      <div class="inputs"><span class="chip hl">📜 Rules</span><span class="chip">📦 Data</span></div>
+      <div class="arrow">⬇</div>
+      <div class="box glass">Computer</div>
+      <div class="arrow">⬇</div>
+      <div class="out"><span class="chip">✅ Answers</span></div>
+      <p class="muted" style="text-align:center">A person writes every rule.<br>"IF temperature &lt; 20 THEN heat on"</p>
+    </div>
+    <div class="glass flow fragment">
+      <h3 style="text-align:center">🧠 Machine learning</h3>
+      <div class="inputs"><span class="chip">📦 Data</span><span class="chip">✅ Answers</span></div>
+      <div class="arrow">⬇</div>
+      <div class="box glass">Computer</div>
+      <div class="arrow">⬇</div>
+      <div class="out"><span class="chip hl2">📜 Rules</span></div>
+      <p class="muted" style="text-align:center">You show it examples.<br>It works out the rules itself.</p>
+    </div>
+  </div>
+  <aside class="notes">
+    0:09 — 2 min. Left side first: a programmer writes the rules. Then reveal the right side: we give data AND the answers, and the computer produces the rules. Same boxes, flipped.
+    Example: nobody can write rules for "what does a cat look like" — too many cats. So we show 10 000 cat photos instead.
+  </aside>
+</section>
+
+<!-- ===================================================== 0:11 AI / ML / DL -->
+<section>
+  <p class="kicker">Words you'll hear</p>
+  <div class="nest-wrap">
+    <div class="nest" aria-label="Deep learning inside machine learning inside AI">
+      <div class="c ai fragment" data-fragment-index="0"><span>🤖 Artificial Intelligence</span></div>
+      <div class="c ml fragment" data-fragment-index="1"><span>📈 Machine Learning</span></div>
+      <div class="c dl fragment" data-fragment-index="2"><span>🧠 Deep<br>Learning</span></div>
+    </div>
+    <div class="defs">
+      <div class="glass fragment" data-fragment-index="0"><b class="grad">AI</b> — any computer doing something that looks smart. Even a chess program with hand-written rules.</div>
+      <div class="glass fragment" data-fragment-index="1"><b class="c1">Machine learning</b> — AI that <b>learns from examples</b> instead of following written rules.</div>
+      <div class="glass fragment" data-fragment-index="2"><b class="c2">Deep learning</b> — machine learning with huge <b>neural networks</b>. Behind face unlock, ChatGPT and self-driving cars.</div>
+    </div>
+  </div>
+  <aside class="notes">
+    0:11 — 2 min. Three clicks, one ring each. Russian dolls: every deep learning system is machine learning, every ML system is AI — not the other way round.
+    Today: first we do machine learning by hand (next slide), then deep learning with the camera.
+  </aside>
+</section>
+
+<!-- ===================================================== 0:13 TEACH THE COMPUTER -->
+<section class="act" data-prevent-swipe>
+  <div class="act-head">
+    <h2>🎯 <span class="grad">Teach the Computer</span></h2>
+    <span class="muted">Cats, dogs or hamsters? Tap to add examples.</span>
+    <span class="spacer"></span>
+    <button class="btn timer" data-sec="480"></button>
+    <a class="btn" href="play/teach.html" target="_blank" rel="noopener">↗ open</a>
+  </div>
+  <iframe class="frame" data-lazy="play/teach.html" title="Teach the computer: nearest neighbours"></iframe>
+  <aside class="notes">
+    0:13 — 8 min. The heart of the hour.
+    1) Clear. Add ONE cat and ONE dog: the whole board splits in two — the computer's first "rule".
+    2) Press 🎲 Starter examples. Hover: dashed lines show the K nearest examples voting. Ask "is a big, not-fluffy animal a cat or a dog?"
+    3) Set K = 1, press 😈 Add a weird one: an island appears around one strange example — the model memorised a mistake (overfitting).
+    4) Slide K to 7: the island disappears. More neighbours = less fooled by one weirdo.
+    Punchline: nobody wrote the coloured map. It came 100% from examples. Change the examples → change the AI.
+    Invite 2–3 students to add points themselves.
+  </aside>
+</section>
+
+<!-- ===================================================== 0:21 DATA LABELLING -->
+<section class="center">
+  <p class="kicker">Plot twist</p>
+  <h2>Where do the <span class="grad">examples</span> come from?</h2>
+  <p class="lead fragment">From <b>people</b>. Millions of photos, drawings and sentences — each one labelled by a human.</p>
+  <p class="lead fragment">For the next 8 minutes, <b class="c2">you</b> are the data labeller. ✍️</p>
+  <aside class="notes">
+    0:21 — 30 s. Quick transition. ImageNet: 14 million images labelled by people. Self-driving cars: millions of boxes drawn by hand.
+  </aside>
+</section>
+
+<section class="act" data-prevent-swipe>
+  <div class="act-head">
+    <h2>✏️ <span class="grad">Doodle Trainer</span></h2>
+    <span class="muted">Draw → save with a label → draw a new one → does it guess?</span>
+    <span class="spacer"></span>
+    <button class="btn timer" data-sec="240"></button>
+    <a class="btn" href="play/doodle.html" target="_blank" rel="noopener">↗ open</a>
+  </div>
+  <iframe class="frame" data-lazy="play/doodle.html" title="Doodle trainer"></iframe>
+  <aside class="notes">
+    0:21 — 4 min. Get 3 volunteers to draw 3 suns, 3 houses, 3 moons (or rename the classes — anything the room shouts).
+    Then someone draws a NEW one: the bars move live while drawing.
+    If it's wrong: save it with the right label — "that's literally how AI gets better: more, better-labelled data".
+    Then ask someone to draw a sun really badly, or a star — it still picks one of the three. It can only choose between what it knows.
+    Works offline (no model download).
+  </aside>
+</section>
+
+<section class="act" data-prevent-swipe>
+  <div class="act-head">
+    <h2>🔲 <span class="grad">Box Labeller</span></h2>
+    <span class="muted">Box every object and label it — like the people who train self-driving cars.</span>
+    <span class="spacer"></span>
+    <button class="btn timer" data-sec="240"></button>
+    <a class="btn" href="play/annotate.html" target="_blank" rel="noopener">↗ open</a>
+  </div>
+  <iframe class="frame" data-lazy="play/annotate.html" title="Bounding box annotation"></iframe>
+  <aside class="notes">
+    0:25 — 4 min. One student boxes; the room calls out objects. Six to find: sun, house, tree, person, cat, car.
+    Point to the green text: this is what the AI actually receives — numbers, not a picture of a box.
+    Press 👁️ Compare with expert: overlap score. "A sloppy box teaches the AI sloppy." Real annotators do thousands a day.
+    If students have devices: QR code at the end — they can all try this one.
+  </aside>
+</section>
+
+<!-- ===================================================== 0:29 HOW A COMPUTER SEES -->
+<section class="act" data-prevent-swipe>
+  <div class="act-head">
+    <h2>👁️ <span class="grad">How a Computer Sees</span></h2>
+    <span class="muted">A picture is just a grid of numbers.</span>
+    <span class="spacer"></span>
+    <button class="btn timer" data-sec="420"></button>
+    <a class="btn" href="play/pixels.html" target="_blank" rel="noopener">↗ open</a>
+  </div>
+  <iframe class="frame" data-lazy="play/pixels.html" allow="camera; fullscreen" title="Pixels and filters"></iframe>
+  <aside class="notes">
+    0:29 — 7 min. Press 🎥 Camera (allow it; the sample picture is the fallback).
+    1) Pixel size slider all the way up: the numbers appear. "This is ALL the computer gets. No 'face', just numbers."
+    2) Slide back down to normal: 307 200 numbers per frame, 30 frames a second.
+    3) ✴️ Edges: wave your hand. The 3×3 grid of numbers is a FILTER sliding over the picture. Show blur / emboss.
+    Punchline: a neural network's first layer learns filters like these on its own, then stacks them: edges → shapes → objects. (Next slide.)
+  </aside>
+</section>
+
+<section id="nn-slide">
+  <p class="kicker">Deep learning, in one picture</p>
+  <h2>Layers on layers of <span class="grad">filters</span></h2>
+  <canvas id="nn" aria-label="Animated neural network"></canvas>
+  <div class="nn-labels">
+    <span class="c1">📷 pixels</span><span style="color:var(--violet)">〰️ edges</span><span class="c2">🔷 shapes</span><span class="c3">🐱 "cat!"</span>
+  </div>
+  <aside class="notes">
+    0:36 — 1 min. Each dot is a tiny calculator. Signals flow left to right. Early layers find edges, middle layers combine edges into shapes (eyes, wheels), the last layer says what it is.
+    "Deep" just means many layers. Training = adjusting millions of numbers until the answers come out right. Next: we train one in 30 seconds.
+  </aside>
+</section>
+
+<!-- ===================================================== 0:37 COMPUTER VISION LIVE -->
+<section class="act" data-prevent-swipe>
+  <div class="act-head">
+    <h2>📸 <span class="grad">Train a Camera AI</span></h2>
+    <span class="muted">Hold a button to record examples. Then test it.</span>
+    <span class="spacer"></span>
+    <button class="btn timer" data-sec="420"></button>
+    <a class="btn" href="play/teachable.html" target="_blank" rel="noopener">↗ open</a>
+  </div>
+  <iframe class="frame" data-lazy="play/teachable.html" allow="camera; fullscreen" title="Train a camera classifier"></iframe>
+  <aside class="notes">
+    0:37 — 7 min. Loads an 8 MB model (MobileNet, served from this site) — give it a few seconds. Press 🎥 Start camera.
+    1) One volunteer in front of the camera. Hold "Thumbs up" while they show a thumb (~30 pics), "Open hand" (~30), "Just me" (~30).
+    2) Watch the bars jump live. Confetti at 40 pictures.
+    3) BIAS MOMENT: now swap in a different person, or stand far away, or cover the lights. It gets confused. Ask WHY → it only ever saw one person in one spot.
+    4) Fix it live: add examples from the new person. It improves. Data decides everything.
+    Fallback: no camera → 📁 add photos per class. No internet → skip to the next slide.
+  </aside>
+</section>
+
+<section>
+  <p class="kicker">Why did it get confused?</p>
+  <h2>An AI only knows <span class="grad">its data</span></h2>
+  <div class="versus">
+    <div class="glass flow">
+      <div class="stat c2">34.7%</div>
+      <p>error rate for <b>darker-skinned women</b> in commercial face-analysis software…</p>
+      <div class="stat c1">0.8%</div>
+      <p>…versus <b>lighter-skinned men</b>.</p>
+      <p class="muted" style="font-size:.7em">Gender Shades study, Buolamwini &amp; Gebru, MIT Media Lab, 2018</p>
+    </div>
+    <div class="glass flow fragment">
+      <h3>🔎 Same problem as our demo</h3>
+      <p>The training photos were mostly of one kind of face. The AI wasn't "mean" — it just <b>never learned</b> the others.</p>
+      <p class="lime"><b>Fix:</b> more varied data, and people who check.</p>
+      <p>That's why AI needs people from <b>every</b> background building it — including you.</p>
+    </div>
+  </div>
+  <aside class="notes">
+    0:44 — 2 min. Link the camera demo to the real world. The companies improved their systems after the study was published — checking works.
+    Ask: "Who should be in the room when an AI is built?"
+  </aside>
+</section>
+
+<section class="act" data-prevent-swipe>
+  <div class="act-head">
+    <h2>🔍 <span class="grad">Object Detector</span></h2>
+    <span class="muted">A real AI trained on 200 000+ hand-labelled photos. What can it spot?</span>
+    <span class="spacer"></span>
+    <button class="btn timer" data-sec="180"></button>
+    <a class="btn" href="play/detect.html" target="_blank" rel="noopener">↗ open</a>
+  </div>
+  <iframe class="frame" data-lazy="play/detect.html" allow="camera; fullscreen" title="Live object detection"></iframe>
+  <aside class="notes">
+    0:46 — 3 min. Start camera. Hold up a phone, a bottle, a cup, a book, a backpack. People get boxes with a confidence %.
+    Callback: every box it draws, it learned from boxes humans drew — like the Box Labeller.
+    Show it something not in its 80 classes (a pen, a shoe): it says nothing, or the wrong thing. Slide the threshold down to 10% → silly guesses appear. Confidence ≠ correctness.
+    No camera? Press 🖼️ Sample, then slide the threshold to 15%: it finds the person — and calls the cartoon sun a "sports ball". Great laugh, great lesson.
+  </aside>
+</section>
+
+<!-- ===================================================== 0:49 WHAT CAN AI DO -->
+<section>
+  <p class="kicker">Beyond the classroom</p>
+  <h2>What can <span class="grad">AI</span> do?</h2>
+  <div class="gallery">
+    <div class="glass gcard fragment"><span class="e">🩺</span><h3>Medicine</h3><p>Spots signs of disease in X-rays and eye scans, helping doctors catch problems early.</p></div>
+    <div class="glass gcard fragment"><span class="e">🧬</span><h3>Science</h3><p>AlphaFold predicted the 3D shape of ~200 million proteins — a 2024 Nobel Prize in Chemistry.</p></div>
+    <div class="glass gcard fragment"><span class="e">🌦️</span><h3>Weather &amp; climate</h3><p>AI weather models make a 10-day forecast in under a minute — a job that takes supercomputers hours.</p></div>
+    <div class="glass gcard fragment"><span class="e">🦻</span><h3>Accessibility</h3><p>Live captions for deaf users, and apps that describe the world out loud to blind users.</p></div>
+    <div class="glass gcard fragment"><span class="e">🗣️</span><h3>Language</h3><p>Translate between 100+ languages, chat, summarise, help write code.</p></div>
+    <div class="glass gcard fragment"><span class="e">🎨</span><h3>Art &amp; music</h3><p>Generate images, songs and video from a sentence.</p></div>
+    <div class="glass gcard fragment"><span class="e">🐋</span><h3>Nature</h3><p>Identifies animals in millions of wildlife-camera photos and whale songs in ocean recordings.</p></div>
+    <div class="glass gcard fragment"><span class="e">♟️</span><h3>Games</h3><p>AlphaGo beat the world Go champion in 2016 with moves no human had played.</p></div>
+  </div>
+  <aside class="notes">
+    0:49 — 4 min. Click through fast, 20–30 s each. Ask "which one would YOU want to work on?"
+    Everything here uses the same idea they just did: lots of labelled examples → a model learns the pattern.
+  </aside>
+</section>
+
+<section>
+  <p class="kicker">…and what to watch out for</p>
+  <h2>AI can be <span class="red">wrong</span> — confidently</h2>
+  <div class="gallery">
+    <div class="glass gcard warn fragment"><span class="e">🤥</span><h3>Hallucinations</h3><p>Chatbots can invent facts, quotes and sources that sound 100% real. Always double-check.</p></div>
+    <div class="glass gcard warn fragment"><span class="e">🎭</span><h3>Deepfakes</h3><p>Fake videos and voices of real people. If it's shocking, check where it came from.</p></div>
+    <div class="glass gcard warn fragment"><span class="e">⚖️</span><h3>Bias</h3><p>Unfair data → unfair AI. You saw it with the camera.</p></div>
+    <div class="glass gcard warn fragment"><span class="e">🔒</span><h3>Privacy</h3><p>AI is trained on data — sometimes yours. Think before you share.</p></div>
+  </div>
+  <p class="lead fragment" style="text-align:center;margin:0 auto">AI is a <b>tool</b>. It's only as good as its data — and the people using it.</p>
+  <aside class="notes">
+    0:53 — 2 min. Not scary, just honest. Tie each back: hallucination = the doodle AI always picking one of three even for a star; bias = the camera demo.
+  </aside>
+</section>
+
+<!-- ===================================================== 0:55 WRAP -->
+<section>
+  <p class="kicker">Remember three things</p>
+  <h2>What you <span class="grad">learned</span> today</h2>
+  <div class="take">
+    <div class="glass fragment"><div class="n c1">1</div><h3>AI learns from examples</h3><p class="muted">Not from rules someone wrote. You trained three yourselves.</p></div>
+    <div class="glass fragment"><div class="n c2">2</div><h3>Data is everything</h3><p class="muted">Humans choose and label it. Bad or narrow data → bad or unfair AI.</p></div>
+    <div class="glass fragment"><div class="n c3">3</div><h3>Stay curious &amp; critical</h3><p class="muted">AI is powerful and can be wrong. Check it — and build it better.</p></div>
+  </div>
+  <aside class="notes">
+    0:55 — 2 min. Ask students to say each takeaway before you reveal it. Quick thumbs check.
+  </aside>
+</section>
+
+<section id="home">
+  <p class="kicker">Keep playing at home</p>
+  <div class="home">
+    <div class="links">
+      <a class="glass" href="play/" target="_blank" rel="noopener">🧪 <span><b>Today's AI Lab</b><small>all 7 activities from this workshop</small></span></a>
+      <a class="glass" href="https://teachablemachine.withgoogle.com/" target="_blank" rel="noopener">📸 <span><b>Teachable Machine</b><small>train image, sound &amp; pose models — by Google</small></span></a>
+      <a class="glass" href="https://quickdraw.withgoogle.com/" target="_blank" rel="noopener">✏️ <span><b>Quick, Draw!</b><small>can a neural network guess your doodle?</small></span></a>
+      <a class="glass" href="https://machinelearningforkids.co.uk/" target="_blank" rel="noopener">🧩 <span><b>Machine Learning for Kids</b><small>build AI projects in Scratch</small></span></a>
+      <a class="glass" href="https://www.elementsofai.com/" target="_blank" rel="noopener">🎓 <span><b>Elements of AI</b><small>a free online course, no maths needed</small></span></a>
+    </div>
+    <div>
+      <div class="qr" id="qr"></div>
+      <div class="qr-url" id="qr-url"></div>
+    </div>
+  </div>
+  <aside class="notes">
+    0:57 — 1 min. Leave this up while students scan the QR code with their phone cameras. The activities work on phones.
+  </aside>
+</section>
+
+<section class="center" data-confetti>
+  <div style="font-size:min(14vh,14vw)">🎉</div>
+  <h1><span class="grad">Thank you!</span></h1>
+  <p class="lead">Questions? Ideas? What would <b>you</b> teach an AI?</p>
+  <aside class="notes">
+    0:58 — 2 min. Questions. If time: ask 2–3 students what they'd build with AI.
+  </aside>
+</section>
+
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script src="js/fx.js"></script>
+<script src="js/deck.js"></script>
+</body>
+</html>

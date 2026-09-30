@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Teach the Computer · AI Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=JetBrains+Mono:wght@500&family=Outfit:wght@400;600;800&display=swap">
+<link rel="stylesheet" href="../css/theme.css">
+<style>
+  :root { --ar: 1.6; }
+  .lab { display: grid; grid-template-columns: minmax(0, 1fr) 350px; gap: 14px; align-items: start; }
+  @media (max-width: 820px) { .lab { grid-template-columns: 1fr; } }
+  .wrap { position: relative; }
+  .axis { position: absolute; color: var(--muted); font-weight: 600; font-size: .9rem; pointer-events: none; }
+  .axis.x { bottom: 8px; right: 12px; }
+  .axis.y { top: 10px; left: 12px; }
+  .tip {
+    position: absolute; pointer-events: none; transform: translate(14px, -50%);
+    background: rgba(10,7,32,.85); border: 1px solid var(--stroke); border-radius: 12px;
+    padding: .35em .7em; font-weight: 700; white-space: nowrap; display: none;
+  }
+  .k { font-family: var(--font-display); font-size: 2rem; }
+  .side h3 { font-size: 1.05rem; margin: 0 0 .3rem; color: var(--muted); font-family: var(--font-body); font-weight: 600; }
+  .counts { font-family: var(--font-mono); }
+</style>
+</head>
+<body class="play">
+<div class="aurora"></div><canvas id="particles"></canvas>
+
+<header class="top">
+  <h1>🎯 <span class="grad">Teach the Computer</span></h1>
+  <a class="back" href="./">← all activities</a>
+</header>
+
+<main class="lab">
+  <div class="wrap">
+    <canvas class="board" id="board" width="960" height="600" aria-label="Click to add examples"></canvas>
+    <div class="tip" id="tip"></div>
+  </div>
+
+  <aside class="glass panel stack side">
+    <div>
+      <h3>1 · Pick a label, then tap the board</h3>
+      <div class="row" id="classes">
+        <button class="btn c1 on" data-c="0">🐱 Cat</button>
+        <button class="btn c2" data-c="1">🐶 Dog</button>
+        <button class="btn c3" data-c="2">🐹 Hamster</button>
+        <button class="btn" data-c="-1" title="Tap a point to delete it">🧽 Erase</button>
+      </div>
+    </div>
+    <div>
+      <h3>2 · K = how many neighbours vote</h3>
+      <div class="row"><span class="k" id="kval">3</span><input type="range" id="k" min="1" max="15" value="3" style="flex:1"></div>
+    </div>
+    <div class="row">
+      <button class="btn" id="seed">🎲 Starter examples</button>
+      <button class="btn pink" id="outlier">😈 Add a weird one</button>
+      <button class="btn" id="toggle">🗺️ Map on</button>
+      <button class="btn" id="clear">🧹 Clear</button>
+    </div>
+    <div class="counts muted" id="counts"></div>
+    <div class="notice" style="border-color:var(--cyan);background:rgba(34,228,255,.07)">
+      Every coloured area is the computer's <b>guess</b>. Nobody wrote a rule — it only looks at the <b>K nearest examples</b> and lets them vote.
+    </div>
+  </aside>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+<script src="../js/fx.js"></script>
+<script>
+(function () {
+  "use strict";
+  const COLORS = [[34, 228, 255], [255, 79, 216], [255, 197, 61]];
+  const EMO = ["🐱", "🐶", "🐹"];
+  const NAMES = ["Cat", "Dog", "Hamster"];
+  const board = document.getElementById("board");
+  const ctx = board.getContext("2d");
+  const W = board.width, H = board.height;
+  const CELL = 8, GW = W / CELL, GH = H / CELL;       // decision map resolution
+
+  const map = document.createElement("canvas"); map.width = GW; map.height = GH;
+  const prev = document.createElement("canvas"); prev.width = GW; prev.height = GH;
+  const mctx = map.getContext("2d"), pctx = prev.getContext("2d");
+
+  let pts = [], K = 3, cls = 0, showMap = true, fade = 1, ripples = [], hover = null;
+
+  function knn(x, y) {
+    if (!pts.length) return null;
+    const d = pts.map((p) => [(p.x - x) ** 2 + (p.y - y) ** 2, p.c]).sort((a, b) => a[0] - b[0]);
+    const k = Math.min(K, d.length), votes = [0, 0, 0];
+    for (let i = 0; i < k; i++) votes[d[i][1]]++;
+    return votes.map((v) => v / k);
+  }
+
+  function rebuild() {
+    pctx.clearRect(0, 0, GW, GH); pctx.drawImage(map, 0, 0);
+    fade = 0;
+    const img = mctx.createImageData(GW, GH);
+    if (pts.length) {
+      for (let gy = 0; gy < GH; gy++) for (let gx = 0; gx < GW; gx++) {
+        const v = knn((gx + .5) * CELL, (gy + .5) * CELL);
+        let r = 0, g = 0, b = 0, best = 0;
+        for (let c = 0; c < 3; c++) { r += COLORS[c][0] * v[c]; g += COLORS[c][1] * v[c]; b += COLORS[c][2] * v[c]; best = Math.max(best, v[c]); }
+        const i = (gy * GW + gx) * 4;
+        img.data[i] = r; img.data[i + 1] = g; img.data[i + 2] = b; img.data[i + 3] = 40 + 120 * best;
+      }
+    }
+    mctx.putImageData(img, 0, 0);
+    const n = [0, 0, 0]; pts.forEach((p) => n[p.c]++);
+    document.getElementById("counts").textContent = `examples: 🐱 ${n[0]}  🐶 ${n[1]}  🐹 ${n[2]}`;
+  }
+
+  function draw(t) {
+    ctx.clearRect(0, 0, W, H);
+    // grid
+    ctx.strokeStyle = "rgba(255,255,255,.05)"; ctx.lineWidth = 1;
+    for (let x = 0; x <= W; x += 60) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+    for (let y = 0; y <= H; y += 60) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+    if (showMap) {
+      fade = Math.min(1, fade + 0.06);
+      ctx.imageSmoothingEnabled = true;
+      ctx.globalAlpha = 1 - fade; ctx.drawImage(prev, 0, 0, W, H);
+      ctx.globalAlpha = fade;     ctx.drawImage(map, 0, 0, W, H);
+      ctx.globalAlpha = 1;
+    }
+    // axis labels, drawn in the canvas so they scale with it
+    ctx.fillStyle = "rgba(183,176,216,.8)"; ctx.font = "600 22px Outfit, system-ui, sans-serif";
+    ctx.textAlign = "left"; ctx.textBaseline = "top"; ctx.fillText("↑ more fluffy", 14, 12);
+    ctx.textAlign = "right"; ctx.textBaseline = "bottom"; ctx.fillText("bigger →", W - 14, H - 10);
+    if (!pts.length) {
+      ctx.fillStyle = "rgba(245,242,255,.55)"; ctx.font = "600 34px Outfit, system-ui, sans-serif";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText("Tap anywhere to add an example 👆", W / 2, H / 2 - 20);
+      ctx.font = "500 24px Outfit, system-ui, sans-serif";
+      ctx.fillText("or press 🎲 Starter examples", W / 2, H / 2 + 24);
+    }
+    // ripples on new points
+    ripples = ripples.filter((r) => r.a > 0);
+    for (const r of ripples) {
+      r.r += 3; r.a -= 0.025;
+      ctx.strokeStyle = `rgba(${COLORS[r.c].join(",")},${r.a})`; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI * 2); ctx.stroke();
+    }
+    // the K neighbours of the hover point
+    if (hover && pts.length) {
+      const near = pts.map((p) => [Math.hypot(p.x - hover.x, p.y - hover.y), p]).sort((a, b) => a[0] - b[0]).slice(0, K);
+      ctx.setLineDash([6, 6]); ctx.lineWidth = 2;
+      for (const [, p] of near) { ctx.strokeStyle = `rgba(${COLORS[p.c].join(",")},.9)`; ctx.beginPath(); ctx.moveTo(hover.x, hover.y); ctx.lineTo(p.x, p.y); ctx.stroke(); }
+      ctx.setLineDash([]);
+      const rad = near[near.length - 1][0];
+      ctx.strokeStyle = "rgba(255,255,255,.35)"; ctx.beginPath(); ctx.arc(hover.x, hover.y, rad, 0, Math.PI * 2); ctx.stroke();
+    }
+    // points
+    ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.font = "22px system-ui, 'Apple Color Emoji', 'Segoe UI Emoji'";
+    for (const p of pts) {
+      const s = 1 + 0.08 * Math.sin(t / 300 + p.x);
+      ctx.fillStyle = `rgba(${COLORS[p.c].join(",")},1)`;
+      ctx.shadowColor = `rgba(${COLORS[p.c].join(",")},.9)`; ctx.shadowBlur = 14;
+      ctx.beginPath(); ctx.arc(p.x, p.y, 17 * s, 0, Math.PI * 2); ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.fillText(EMO[p.c], p.x, p.y + 1);
+    }
+    requestAnimationFrame(draw);
+  }
+
+  function add(x, y, c) {
+    pts.push({ x, y, c });
+    ripples.push({ x, y, r: 16, a: 1, c });
+    rebuild();
+  }
+
+  board.addEventListener("pointerdown", (e) => {
+    e.stopPropagation();
+    const { x, y } = FX.canvasPoint(board, e);
+    if (cls === -1) {
+      let best = -1, bd = 40;
+      pts.forEach((p, i) => { const d = Math.hypot(p.x - x, p.y - y); if (d < bd) { bd = d; best = i; } });
+      if (best >= 0) { pts.splice(best, 1); rebuild(); }
+      return;
+    }
+    add(x, y, cls);
+  });
+
+  const tip = document.getElementById("tip");
+  board.addEventListener("pointermove", (e) => {
+    const p = FX.canvasPoint(board, e);
+    hover = p;
+    const v = knn(p.x, p.y);
+    if (!v) { tip.style.display = "none"; return; }
+    const c = v.indexOf(Math.max(...v));
+    const r = board.getBoundingClientRect();
+    tip.style.display = "block";
+    tip.style.left = (e.clientX - r.left) + "px"; tip.style.top = (e.clientY - r.top) + "px";
+    tip.innerHTML = `❓ → ${EMO[c]} ${NAMES[c]} <span class="muted">${Math.round(v[c] * 100)}%</span>`;
+  });
+  board.addEventListener("pointerleave", () => { hover = null; tip.style.display = "none"; });
+
+  document.querySelectorAll("#classes .btn").forEach((b) => b.addEventListener("click", () => {
+    document.querySelectorAll("#classes .btn").forEach((x) => x.classList.remove("on"));
+    b.classList.add("on"); cls = +b.dataset.c;
+  }));
+  const kIn = document.getElementById("k");
+  kIn.addEventListener("input", () => { K = +kIn.value; document.getElementById("kval").textContent = K; rebuild(); });
+
+  function blob(cx, cy, c, n, spread) {
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random()) * spread;
+      pts.push({ x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r, c });
+    }
+  }
+  document.getElementById("seed").addEventListener("click", () => {
+    pts = [];
+    blob(W * 0.25, H * 0.3, 0, 9, 110);   // cats: small-ish, fluffy
+    blob(W * 0.72, H * 0.45, 1, 9, 130);  // dogs: big
+    blob(W * 0.2, H * 0.78, 2, 7, 80);    // hamsters: tiny
+    rebuild();
+    FX.toast("Now hover anywhere — who are the nearest neighbours?");
+  });
+  document.getElementById("outlier").addEventListener("click", () => {
+    // A cat in the middle of dog country — a mislabelled or unusual example.
+    const dogs = pts.filter((p) => p.c === 1);
+    const at = dogs.length ? dogs[Math.floor(Math.random() * dogs.length)] : { x: W * 0.72, y: H * 0.45 };
+    add(at.x + 22, at.y - 18, 0);
+    FX.toast(K === 1 ? "K = 1: one weird example carves out its own island! Try K = 5." : "Set K to 1 and watch the weird one take over its area.", 3200);
+  });
+  document.getElementById("toggle").addEventListener("click", (e) => { showMap = !showMap; e.currentTarget.textContent = showMap ? "🗺️ Map on" : "🗺️ Map off"; });
+  document.getElementById("clear").addEventListener("click", () => { pts = []; rebuild(); });
+
+  rebuild();
+  requestAnimationFrame(draw);
+})();
+</script>
+</body>
+</html>

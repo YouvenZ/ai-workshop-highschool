@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Lab · Activities</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=JetBrains+Mono:wght@500&family=Outfit:wght@400;600;800&display=swap">
+<link rel="stylesheet" href="../css/theme.css">
+<style>
+  .hero { text-align: center; margin: 3vh 0 4vh; }
+  .hero h1 { font-size: clamp(2.2rem, 7vw, 4.2rem); margin: 0; }
+  .hero p { font-size: clamp(1rem, 2.4vw, 1.3rem); color: var(--muted); margin: .4em 0 0; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; max-width: 1280px; margin: 0 auto; font-size: clamp(1rem, 1.2vw, 1.25rem); }
+  a.card {
+    display: grid; gap: .5rem; padding: 22px; text-decoration: none; color: var(--ink);
+    transition: transform .2s cubic-bezier(.2,1.4,.4,1), box-shadow .2s;
+    position: relative; overflow: hidden;
+  }
+  a.card::before {
+    content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; opacity: 0; transition: opacity .2s;
+    background: linear-gradient(135deg, var(--cyan), var(--pink), var(--amber));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+  }
+  a.card:hover { transform: translateY(-6px) rotate(-.5deg); }
+  a.card:hover::before { opacity: 1; }
+  .card .emo { font-size: 3rem; line-height: 1; }
+  .card h2 { font-size: 1.45rem; margin: 0; }
+  .card p { margin: 0; color: var(--muted); line-height: 1.35; }
+  .tags { display: flex; gap: 6px; flex-wrap: wrap; }
+  .foot { text-align: center; margin: 5vh 0 2vh; color: var(--muted); }
+  .foot a { color: var(--cyan); }
+</style>
+</head>
+<body class="play">
+<div class="aurora"></div><canvas id="particles"></canvas>
+
+<div class="hero">
+  <h1>🧪 <span class="grad">AI Lab</span></h1>
+  <p>Seven hands-on experiments. Works on laptops, tablets and phones.</p>
+</div>
+
+<main class="grid">
+  <a class="card glass" href="ai-or-not.html"><span class="emo">🤖</span><h2>AI or Not?</h2><p>Drag everyday tech into the right box. Harder than it looks.</p><div class="tags"><span class="pill">drag &amp; drop</span><span class="pill">3 min</span></div></a>
+  <a class="card glass" href="teach.html"><span class="emo">🎯</span><h2>Teach the Computer</h2><p>Place examples, watch the machine draw its own rules.</p><div class="tags"><span class="pill">machine learning</span><span class="pill">5 min</span></div></a>
+  <a class="card glass" href="doodle.html"><span class="emo">✏️</span><h2>Doodle Trainer</h2><p>Draw, label, train — then see if it recognises your next doodle.</p><div class="tags"><span class="pill">labelling</span><span class="pill">works offline</span></div></a>
+  <a class="card glass" href="annotate.html"><span class="emo">🔲</span><h2>Box Labeller</h2><p>Be the human behind self-driving cars. Box every object.</p><div class="tags"><span class="pill">annotation</span><span class="pill">4 min</span></div></a>
+  <a class="card glass" href="pixels.html"><span class="emo">👁️</span><h2>How a Computer Sees</h2><p>Pixels, numbers, and the filters a neural network learns.</p><div class="tags"><span class="pill">camera</span><span class="pill">computer vision</span></div></a>
+  <a class="card glass" href="teachable.html"><span class="emo">📸</span><h2>Train a Camera AI</h2><p>Teach your webcam to recognise gestures in 30 seconds.</p><div class="tags"><span class="pill">camera</span><span class="pill">deep learning</span></div></a>
+  <a class="card glass" href="detect.html"><span class="emo">🔍</span><h2>Object Detector</h2><p>A real AI finds and boxes 80 kinds of objects, live.</p><div class="tags"><span class="pill">camera</span><span class="pill">computer vision</span></div></a>
+</main>
+
+<p class="foot">Everything runs <b>inside your browser</b> — no photo ever leaves your device. · <a href="../">← back to the slides</a></p>
+
+<script src="../js/fx.js"></script>
+</body>
+</html>

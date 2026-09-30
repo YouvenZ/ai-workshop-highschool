@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Doodle Trainer · AI Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=JetBrains+Mono:wght@500&family=Outfit:wght@400;600;800&display=swap">
+<link rel="stylesheet" href="../css/theme.css">
+<style>
+  :root { --ar: 1; --below: 120px; }
+  .lab { display: grid; grid-template-columns: minmax(260px, 480px) minmax(0, 1fr); gap: 14px; align-items: start; }
+  @media (max-width: 760px) { .lab { grid-template-columns: 1fr; } }
+  #pad { aspect-ratio: 1; background: radial-gradient(circle at 50% 40%, rgba(139,92,255,.18), rgba(0,0,0,.45)); cursor: crosshair; }
+  .guess { font-family: var(--font-display); font-size: clamp(1.4rem, 3vw, 2.2rem); min-height: 1.4em; }
+  .shelf { display: grid; gap: 8px; }
+  .shelf .cls { display: grid; grid-template-columns: 8.5em 1fr; gap: 8px; align-items: center; }
+  .shelf .name { display: flex; align-items: center; gap: .3em; }
+  .shelf input { width: 100%; padding: .3em .5em; font-weight: 700; }
+  .thumbs { display: flex; gap: 5px; flex-wrap: wrap; min-height: 44px; align-items: center; }
+  .thumbs canvas { width: 40px; height: 40px; border-radius: 8px; background: rgba(0,0,0,.35); border: 1px solid var(--stroke); animation: drop .35s cubic-bezier(.2,1.6,.4,1); }
+  .thumbs .empty { color: var(--muted); font-size: .85rem; }
+  .cls.c1 .thumbs canvas { border-color: var(--c1); }
+  .cls.c2 .thumbs canvas { border-color: var(--c2); }
+  .cls.c3 .thumbs canvas { border-color: var(--c3); }
+  @keyframes drop { from { transform: translateY(-20px) scale(.5); opacity: 0; } }
+  h3 { font-size: 1.05rem; margin: 0; color: var(--muted); font-family: var(--font-body); font-weight: 600; }
+</style>
+</head>
+<body class="play">
+<div class="aurora"></div><canvas id="particles"></canvas>
+
+<header class="top">
+  <h1>✏️ <span class="grad">Doodle Trainer</span></h1>
+  <a class="back" href="./">← all activities</a>
+</header>
+
+<main class="lab">
+  <section class="glass panel stack">
+    <canvas class="board" id="pad" width="420" height="420" aria-label="Drawing pad"></canvas>
+    <div class="row">
+      <button class="btn c1" data-c="0" id="save0">💾 Save as ☀️</button>
+      <button class="btn c2" data-c="1" id="save1">💾 Save as 🏠</button>
+      <button class="btn c3" data-c="2" id="save2">💾 Save as 🌙</button>
+      <button class="btn" id="clear">🧽 Clear</button>
+    </div>
+  </section>
+
+  <section class="glass panel stack">
+    <h3>🔮 The computer's live guess</h3>
+    <div class="guess" id="guess">Draw something!</div>
+    <div class="bars" id="bars"></div>
+    <h3 style="margin-top:.6rem">📚 Your training data — you are the data labeller</h3>
+    <div class="shelf" id="shelf"></div>
+    <div class="row">
+      <button class="btn" id="reset">🗑️ Forget everything</button>
+      <span class="muted" style="font-size:.9rem">Tip: 3 examples each is enough to start. If it guesses wrong, save the drawing with the <b>right</b> label — that's how it learns.</span>
+    </div>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+<script src="../js/fx.js"></script>
+<script>
+(function () {
+  "use strict";
+  const pad = document.getElementById("pad");
+  const pctx = pad.getContext("2d");
+  const SZ = 28;                                   // feature image: 28×28, like MNIST
+  let classes = [
+    { emo: "☀️", name: "Sun",   ex: [] },
+    { emo: "🏠", name: "House", ex: [] },
+    { emo: "🌙", name: "Moon",  ex: [] },
+  ];
+  const cssCls = ["c1", "c2", "c3"];
+  let drawing = false, last = null, dirty = false;
+
+  // ---------- drawing ----------
+  function stroke(a, b) {
+    pctx.strokeStyle = "#fff"; pctx.lineWidth = 14; pctx.lineCap = "round"; pctx.lineJoin = "round";
+    pctx.shadowColor = "rgba(34,228,255,.9)"; pctx.shadowBlur = 8;
+    pctx.beginPath(); pctx.moveTo(a.x, a.y); pctx.lineTo(b.x, b.y); pctx.stroke();
+  }
+  pad.addEventListener("pointerdown", (e) => {
+    e.stopPropagation(); pad.setPointerCapture(e.pointerId);
+    drawing = true; last = FX.canvasPoint(pad, e); stroke(last, { x: last.x + .1, y: last.y });
+    dirty = true;
+  });
+  pad.addEventListener("pointermove", (e) => {
+    if (!drawing) return;
+    e.stopPropagation();
+    const p = FX.canvasPoint(pad, e); stroke(last, p); last = p; dirty = true;
+  });
+  const up = () => { drawing = false; predict(); };
+  pad.addEventListener("pointerup", up); pad.addEventListener("pointercancel", up);
+  function clearPad() { pctx.clearRect(0, 0, pad.width, pad.height); dirty = false; predict(); }
+  document.getElementById("clear").addEventListener("click", clearPad);
+
+  // live prediction while drawing, ~8×/s
+  setInterval(() => { if (drawing) predict(); }, 120);
+
+  // ---------- features: crop to the drawing, centre it, shrink to 28×28, blur ----------
+  const small = document.createElement("canvas"); small.width = small.height = SZ;
+  const sctx = small.getContext("2d", { willReadFrequently: true });
+  function features() {
+    const { width: w, height: h } = pad;
+    const d = pctx.getImageData(0, 0, w, h).data;
+    let x0 = w, y0 = h, x1 = -1, y1 = -1;
+    for (let y = 0; y < h; y += 2) for (let x = 0; x < w; x += 2) {
+      if (d[(y * w + x) * 4 + 3] > 40) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    }
+    if (x1 < 0) return null;
+    const bw = x1 - x0 + 1, bh = y1 - y0 + 1, s = 20 / Math.max(bw, bh);
+    sctx.clearRect(0, 0, SZ, SZ);
+    sctx.imageSmoothingEnabled = true;
+    sctx.drawImage(pad, x0, y0, bw, bh, (SZ - bw * s) / 2, (SZ - bh * s) / 2, bw * s, bh * s);
+    const px = sctx.getImageData(0, 0, SZ, SZ).data;
+    const raw = new Float32Array(SZ * SZ);
+    for (let i = 0; i < SZ * SZ; i++) raw[i] = px[i * 4 + 3] / 255;
+    // 3×3 blur makes "almost the same stroke" count as similar
+    const v = new Float32Array(SZ * SZ); let norm = 0;
+    for (let y = 0; y < SZ; y++) for (let x = 0; x < SZ; x++) {
+      let s2 = 0;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        const xx = x + dx, yy = y + dy;
+        if (xx >= 0 && yy >= 0 && xx < SZ && yy < SZ) s2 += raw[yy * SZ + xx];
+      }
+      v[y * SZ + x] = s2; norm += s2 * s2;
+    }
+    norm = Math.sqrt(norm) || 1;
+    for (let i = 0; i < v.length; i++) v[i] /= norm;
+    return v;
+  }
+  const dot = (a, b) => { let s = 0; for (let i = 0; i < a.length; i++) s += a[i] * b[i]; return s; };
+
+  // ---------- classifier: nearest neighbours, turned into confidences ----------
+  function predict() {
+    const bars = document.getElementById("bars");
+    const guess = document.getElementById("guess");
+    const ready = classes.filter((c) => c.ex.length).length;
+    const f = dirty ? features() : null;
+    if (!f) { guess.textContent = ready >= 2 ? "Draw something to test me!" : "Teach me first 👇"; setBars(classes.map(() => 0)); return; }
+    if (ready < 2) { guess.textContent = "I need examples of at least 2 things 👇"; setBars(classes.map(() => 0)); return; }
+    // best similarity to each class (mean of its top-2 matches)
+    const score = classes.map((c) => {
+      if (!c.ex.length) return -Infinity;
+      const s = c.ex.map((e) => dot(e.f, f)).sort((a, b) => b - a);
+      return s.length > 1 ? (s[0] + s[1]) / 2 : s[0];
+    });
+    const T = 0.04, m = Math.max(...score);
+    const ex = score.map((s) => (s === -Infinity ? 0 : Math.exp((s - m) / T)));
+    const sum = ex.reduce((a, b) => a + b, 0);
+    const p = ex.map((e) => e / sum);
+    const best = p.indexOf(Math.max(...p));
+    guess.innerHTML = `I think it's ${classes[best].emo} <span class="${cssCls[best]}">${classes[best].name}</span>${p[best] < 0.6 ? " …maybe? 🤔" : "!"}`;
+    setBars(p);
+  }
+
+  function renderBars() {
+    document.getElementById("bars").innerHTML = classes.map((c, i) =>
+      `<div class="bar ${cssCls[i]}"><span>${c.emo} ${c.name}</span><span class="track"><span class="fill"></span></span><span class="pct">0%</span></div>`).join("");
+  }
+  function setBars(p) {
+    document.querySelectorAll("#bars .bar").forEach((b, i) => {
+      b.querySelector(".fill").style.width = (p[i] * 100).toFixed(0) + "%";
+      b.querySelector(".pct").textContent = (p[i] * 100).toFixed(0) + "%";
+    });
+  }
+
+  function renderShelf() {
+    const shelf = document.getElementById("shelf");
+    shelf.innerHTML = "";
+    classes.forEach((c, i) => {
+      const row = document.createElement("div");
+      row.className = "cls " + cssCls[i];
+      row.innerHTML = `<label class="name"><span>${c.emo}</span><input type="text" value="${c.name}" maxlength="12" aria-label="Class name"></label><div class="thumbs"></div>`;
+      const th = row.querySelector(".thumbs");
+      if (!c.ex.length) th.innerHTML = '<span class="empty">no examples yet</span>';
+      c.ex.forEach((e) => th.appendChild(e.thumb));
+      row.querySelector("input").addEventListener("input", (ev) => { c.name = ev.target.value || "?"; renderButtons(); renderBars(); predict(); });
+      shelf.appendChild(row);
+    });
+  }
+  function renderButtons() {
+    classes.forEach((c, i) => (document.getElementById("save" + i).textContent = `💾 Save as ${c.emo} ${c.name}`));
+  }
+
+  function save(i) {
+    const f = dirty ? features() : null;
+    if (!f) { FX.toast("Draw something first ✏️"); return; }
+    const thumb = document.createElement("canvas");
+    thumb.width = thumb.height = 80;
+    thumb.getContext("2d").drawImage(pad, 0, 0, 80, 80);
+    classes[i].ex.push({ f, thumb });
+    renderShelf();
+    const total = classes.reduce((a, c) => a + c.ex.length, 0);
+    if (total === 6) { FX.confetti(); FX.toast("Enough to learn! Now draw a new one and watch the guess."); }
+    clearPad();
+  }
+  [0, 1, 2].forEach((i) => document.getElementById("save" + i).addEventListener("click", () => save(i)));
+  document.getElementById("reset").addEventListener("click", () => { classes.forEach((c) => (c.ex = [])); renderShelf(); clearPad(); });
+
+  renderButtons(); renderBars(); renderShelf(); predict();
+})();
+</script>
+</body>
+</html>

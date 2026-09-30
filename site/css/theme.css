@@ -1,0 +1,237 @@
+/* ==========================================================================
+   Design tokens + shared components.
+   Used by the deck (index.html) AND every standalone activity in play/,
+   so an activity looks identical embedded in a slide or opened on a phone.
+   ========================================================================== */
+
+:root {
+  /* surfaces */
+  --bg:        #0a0720;
+  --bg-2:      #150f3a;
+  --glass:     rgba(255, 255, 255, 0.07);
+  --glass-2:   rgba(255, 255, 255, 0.12);
+  --stroke:    rgba(255, 255, 255, 0.16);
+
+  /* text */
+  --ink:       #f5f2ff;
+  --muted:     #b7b0d8;
+
+  /* neon accents */
+  --cyan:      #22e4ff;
+  --pink:      #ff4fd8;
+  --lime:      #b6ff3b;
+  --amber:     #ffc53d;
+  --violet:    #8b5cff;
+  --red:       #ff5a6e;
+
+  /* class colours: the SAME three colours mean "class 1/2/3" in every activity */
+  --c1: var(--cyan);
+  --c2: var(--pink);
+  --c3: var(--amber);
+
+  --radius:    22px;
+  --radius-sm: 12px;
+  --shadow:    0 20px 60px rgba(0, 0, 0, 0.45);
+  --glow-cyan: 0 0 24px rgba(34, 228, 255, 0.55);
+  --glow-pink: 0 0 24px rgba(255, 79, 216, 0.55);
+
+  --font-display: "Fredoka", "Outfit", system-ui, sans-serif;
+  --font-body:    "Outfit", system-ui, sans-serif;
+  --font-mono:    "JetBrains Mono", ui-monospace, monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+/* The page colour lives on <html> only: a background on <body> would paint
+   over the fixed .aurora layer (z-index -2) and hide it. */
+html { background: var(--bg); }
+html, body {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Animated aurora backdrop — pure CSS, zero cost when the tab is hidden */
+.aurora {
+  position: fixed; inset: -20%;
+  z-index: -2;
+  background:
+    radial-gradient(40% 40% at 20% 30%, rgba(139, 92, 255, 0.45), transparent 70%),
+    radial-gradient(35% 35% at 80% 20%, rgba(255, 79, 216, 0.30), transparent 70%),
+    radial-gradient(45% 45% at 70% 80%, rgba(34, 228, 255, 0.28), transparent 70%),
+    radial-gradient(30% 30% at 15% 85%, rgba(182, 255, 59, 0.14), transparent 70%),
+    var(--bg);
+  filter: blur(20px);
+  animation: aurora 24s ease-in-out infinite alternate;
+}
+@keyframes aurora {
+  0%   { transform: translate(0, 0) rotate(0deg) scale(1); }
+  50%  { transform: translate(3%, -2%) rotate(8deg) scale(1.08); }
+  100% { transform: translate(-3%, 2%) rotate(-6deg) scale(1.02); }
+}
+#particles { position: fixed; inset: 0; z-index: -1; pointer-events: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora { animation: none; }
+}
+
+/* ---------- typography ---------- */
+h1, h2, h3 { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.01em; margin: 0 0 .4em; }
+.grad {
+  background: linear-gradient(90deg, var(--cyan), var(--pink) 50%, var(--amber));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.muted { color: var(--muted); }
+.mono  { font-family: var(--font-mono); }
+.c1 { color: var(--c1); } .c2 { color: var(--c2); } .c3 { color: var(--c3); }
+.lime { color: var(--lime); } .red { color: var(--red); }
+
+/* ---------- glass card ---------- */
+.glass {
+  background: var(--glass);
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: var(--shadow);
+}
+
+/* ---------- buttons ---------- */
+.btn {
+  font: 600 1rem var(--font-body);
+  color: var(--ink);
+  background: var(--glass-2);
+  border: 1px solid var(--stroke);
+  border-radius: 999px;
+  padding: .6em 1.2em;
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .2s ease, background .2s ease;
+  user-select: none; -webkit-user-select: none;
+  touch-action: manipulation;
+  display: inline-flex; align-items: center; gap: .45em;
+  text-decoration: none;
+}
+.btn:hover  { transform: translateY(-2px); background: rgba(255,255,255,.18); }
+.btn:active { transform: scale(.96); }
+.btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+.btn.primary { background: linear-gradient(90deg, var(--violet), var(--pink)); border-color: transparent; box-shadow: var(--glow-pink); }
+.btn.cyan    { background: rgba(34,228,255,.18);  border-color: var(--cyan);  }
+.btn.pink    { background: rgba(255,79,216,.18);  border-color: var(--pink);  }
+.btn.amber   { background: rgba(255,197,61,.18);  border-color: var(--amber); }
+.btn.on      { box-shadow: 0 0 0 2px var(--cyan) inset, var(--glow-cyan); background: rgba(34,228,255,.2); }
+.btn.c1 { color: var(--ink); border-color: var(--c1); background: rgba(34,228,255,.16); }
+.btn.c2 { color: var(--ink); border-color: var(--c2); background: rgba(255,79,216,.16); }
+.btn.c3 { color: var(--ink); border-color: var(--c3); background: rgba(255,197,61,.16); }
+.btn.c1.on { box-shadow: 0 0 0 3px var(--c1) inset, var(--glow-cyan); }
+.btn.c2.on { box-shadow: 0 0 0 3px var(--c2) inset, var(--glow-pink); }
+.btn.c3.on { box-shadow: 0 0 0 3px var(--c3) inset, 0 0 24px rgba(255,197,61,.5); }
+
+input[type=range] { accent-color: var(--pink); width: 100%; }
+select, input[type=text] {
+  font: 500 1rem var(--font-body); color: var(--ink);
+  background: var(--glass-2); border: 1px solid var(--stroke);
+  border-radius: var(--radius-sm); padding: .45em .7em;
+}
+select option { background: var(--bg-2); }
+
+.pill {
+  display: inline-block; padding: .2em .8em; border-radius: 999px;
+  background: var(--glass-2); border: 1px solid var(--stroke);
+  font-size: .85em; font-weight: 600;
+}
+
+/* ---------- confidence bars (doodle, teachable machine) ---------- */
+.bars { display: grid; gap: .55rem; }
+.bar  { display: grid; grid-template-columns: 7.5em 1fr 3.4em; align-items: center; gap: .6rem; font-weight: 600; }
+.bar .track { display: block; height: 1.25rem; border-radius: 999px; background: rgba(255,255,255,.08); overflow: hidden; }
+.bar .fill  { display: block; height: 100%; width: 0; border-radius: 999px; transition: width .25s ease; }
+.bar .pct   { text-align: right; font-family: var(--font-mono); font-size: .9em; }
+.bar.c1 .fill { background: linear-gradient(90deg, #0fa3c4, var(--c1)); box-shadow: var(--glow-cyan); }
+.bar.c2 .fill { background: linear-gradient(90deg, #b3179a, var(--c2)); box-shadow: var(--glow-pink); }
+.bar.c3 .fill { background: linear-gradient(90deg, #c78a00, var(--c3)); }
+
+/* ---------- friendly notice (camera denied, model offline…) ---------- */
+.notice {
+  border: 1px dashed var(--amber);
+  background: rgba(255,197,61,.08);
+  border-radius: var(--radius-sm);
+  padding: .8em 1em;
+  line-height: 1.4;
+}
+.notice.hidden { display: none; }
+
+.toast {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(140%);
+  background: var(--bg-2); border: 1px solid var(--stroke); border-radius: 999px;
+  padding: .7em 1.3em; font-weight: 600; z-index: 99;
+  transition: transform .35s cubic-bezier(.2,1.4,.4,1);
+  box-shadow: var(--shadow);
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+.spinner {
+  width: 1.1em; height: 1.1em; border-radius: 50%;
+  border: 3px solid rgba(255,255,255,.2); border-top-color: var(--cyan);
+  animation: spin .8s linear infinite; display: inline-block; vertical-align: -.2em;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------- standalone activity page layout (play/*.html) ---------- */
+body.play {
+  min-height: 100vh;
+  padding: clamp(12px, 3vw, 28px);
+}
+body.play header.top {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  margin-bottom: 1rem; flex-wrap: wrap;
+}
+body.play header.top h1 { font-size: clamp(1.5rem, 4vw, 2.4rem); margin: 0; }
+body.play header.top a.back { color: var(--muted); text-decoration: none; font-weight: 600; }
+/* Embedded in the deck: the slide supplies the title, so drop the page header */
+body.play.embedded header.top { display: none; }
+body.play.embedded { padding: 6px; min-height: 0; background: transparent; }
+body.play.embedded .aurora, body.play.embedded #particles { display: none; }
+html.embedded { background: transparent; }
+
+.panel { padding: clamp(12px, 2vw, 22px); }
+.row   { display: flex; gap: .6rem; flex-wrap: wrap; align-items: center; }
+.stack { display: grid; gap: .8rem; align-content: start; grid-template-columns: minmax(0, 1fr); }
+.lab > *, .stack > * { min-width: 0; }
+
+canvas.board {
+  display: block; width: 100%; height: auto;
+  border-radius: var(--radius-sm);
+  background: rgba(0,0,0,.35);
+  border: 1px solid var(--stroke);
+  touch-action: none;            /* our pointer handlers own every gesture here */
+  cursor: crosshair;
+}
+video.cam, canvas.cam {
+  display: block; width: 100%; height: auto;
+  border-radius: var(--radius-sm);
+  background: #000;
+}
+.mirror { transform: scaleX(-1); }
+
+/* Embedded in a slide the iframe has a fixed height: size canvases by the
+   height that is left, keeping their aspect ratio, so nothing is cut off.
+   Each page sets --ar (canvas aspect) and --below (space its controls need). */
+html.embedded { font-size: clamp(14px, 1.2vw, 24px); }
+body.play.embedded canvas.board,
+body.play.embedded canvas.cam,
+body.play.embedded video.cam {
+  width: min(100%, calc((100vh - var(--below, 20px)) * var(--ar, 1.6)));
+  margin-inline: auto;
+}
+body.play.embedded .btn { padding: .42em .85em; }
+body.play.embedded .panel { padding: 12px; }
+/* Standalone on a laptop: same idea, leaving room for the page header and
+   the button row, so the controls are never below the fold. Phones are
+   narrow, so width wins there and the page simply scrolls. */
+body.play:not(.embedded) canvas.board,
+body.play:not(.embedded) canvas.cam,
+body.play:not(.embedded) video.cam {
+  width: min(100%, calc((100vh - 110px - var(--below, 20px)) * var(--ar, 1.6)));
+  margin-inline: auto;
+}

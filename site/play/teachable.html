@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Train a Camera AI · AI Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=JetBrains+Mono:wght@500&family=Outfit:wght@400;600;800&display=swap">
+<link rel="stylesheet" href="../css/theme.css">
+<style>
+  :root { --ar: 1.3333; --below: 110px; }
+  .lab { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 400px); gap: 14px; align-items: start; }
+  @media (max-width: 860px) { .lab { grid-template-columns: 1fr; } }
+  .stage { position: relative; }
+  .stage .overlay {
+    position: absolute; left: 12px; bottom: 12px; right: 12px;
+    display: flex; align-items: center; gap: .5em;
+    font-family: var(--font-display); font-size: clamp(1.5rem, 4vw, 2.6rem);
+    text-shadow: 0 2px 12px #000;
+    pointer-events: none;
+  }
+  .stage .overlay .emo { font-size: 1.5em; animation: bob 1.2s ease-in-out infinite; }
+  @keyframes bob { 50% { transform: translateY(-6px) scale(1.06); } }
+  #video { display: none; }
+  .cls { display: grid; gap: 6px; padding: 10px; border-radius: 16px; background: rgba(255,255,255,.05); border: 1px solid var(--stroke); }
+  .cls.c1 { border-color: rgba(34,228,255,.5); } .cls.c2 { border-color: rgba(255,79,216,.5); } .cls.c3 { border-color: rgba(255,197,61,.5); }
+  .cls .head { display: flex; gap: 6px; align-items: center; }
+  .cls .head input { flex: 1; width: 0; min-width: 0; font-weight: 700; }
+  .cls .count { font-family: var(--font-mono); color: var(--muted); min-width: 4.5em; text-align: right; }
+  .thumbs { display: flex; gap: 4px; min-height: 36px; overflow: hidden; }
+  .thumbs canvas { width: 36px; height: 36px; border-radius: 6px; object-fit: cover; flex: none; }
+  .rec.recording { animation: pulse .6s ease-in-out infinite; background: rgba(255,90,110,.35); border-color: var(--red); }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 8px rgba(255,90,110,.25); } }
+  .status { display: flex; gap: .5em; align-items: center; font-weight: 600; }
+  input[type=file] { display: none; }
+  .filebtn { display: none; }
+  .nocam .filebtn { display: inline-flex; }
+  .nocam .rec { display: none; }
+</style>
+</head>
+<body class="play">
+<div class="aurora"></div><canvas id="particles"></canvas>
+
+<header class="top">
+  <h1>📸 <span class="grad">Train a Camera AI</span></h1>
+  <a class="back" href="./">← all activities</a>
+</header>
+
+<main class="lab" id="lab">
+  <section class="glass panel stack">
+    <div class="stage">
+      <video id="video" class="cam mirror" playsinline muted></video>
+      <canvas id="still" class="cam" width="640" height="480"></canvas>
+      <div class="overlay" id="overlay"></div>
+    </div>
+    <div class="row">
+      <button class="btn primary" id="start">🎥 Start camera</button>
+      <label class="btn filebtn" for="testFile">🔍 Test a photo</label><input type="file" id="testFile" accept="image/*">
+      <div class="status" id="status"><span class="spinner"></span> Loading the AI brain (MobileNet, 8 MB)…</div>
+    </div>
+    <div class="notice hidden" id="msg"></div>
+  </section>
+
+  <section class="glass panel stack">
+    <div id="classes" class="stack"></div>
+    <div class="bars" id="bars"></div>
+    <div class="row">
+      <button class="btn" id="reset">🗑️ Reset</button>
+    </div>
+    <div class="notice" style="border-color:var(--pink);background:rgba(255,79,216,.07)">
+      🧪 <b>Experiment:</b> train it with only <b>one</b> person in <b>one</b> spot. Then let someone else try, or turn off the lights. Does it still work? Why not?
+    </div>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.1/dist/mobilenet.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/knn-classifier@1.2.6/dist/knn-classifier.min.js"></script>
+<script src="../js/fx.js"></script>
+<script>
+(function () {
+  "use strict";
+  const video = document.getElementById("video");
+  const still = document.getElementById("still"), sctx = still.getContext("2d");
+  const lab = document.getElementById("lab");
+  const statusEl = document.getElementById("status"), msg = document.getElementById("msg");
+  const CSS = ["c1", "c2", "c3"];
+  const classes = [
+    { emo: "👍", name: "Thumbs up",  n: 0 },
+    { emo: "✋", name: "Open hand",  n: 0 },
+    { emo: "🙂", name: "Just me",    n: 0 },
+  ];
+  let net = null, knn = null, camOn = false, stillImg = null, recording = -1, lastProbs = [0, 0, 0];
+
+  function say(html, kind) {
+    statusEl.innerHTML = html;
+    statusEl.style.color = kind === "bad" ? "var(--red)" : kind === "ok" ? "var(--lime)" : "";
+  }
+  function notice(html) { msg.innerHTML = html; msg.classList.remove("hidden"); }
+
+  // ---------- UI ----------
+  function renderClasses() {
+    const box = document.getElementById("classes");
+    box.innerHTML = "";
+    classes.forEach((c, i) => {
+      const el = document.createElement("div");
+      el.className = "cls " + CSS[i];
+      el.innerHTML = `
+        <div class="head"><span style="font-size:1.4em">${c.emo}</span>
+          <input type="text" value="${c.name}" maxlength="14" aria-label="Class name">
+          <span class="count" id="count${i}">${c.n} pics</span></div>
+        <div class="row">
+          <button class="btn ${CSS[i]} rec" data-i="${i}">⏺️ Hold to record</button>
+          <label class="btn ${CSS[i]} filebtn" for="file${i}">📁 Add photos</label>
+          <input type="file" id="file${i}" accept="image/*" multiple>
+        </div>
+        <div class="thumbs" id="thumbs${i}"></div>`;
+      el.querySelector("input[type=text]").addEventListener("input", (e) => { c.name = e.target.value || "?"; renderBars(); });
+      const rec = el.querySelector(".rec");
+      const start = (e) => { e.preventDefault(); e.stopPropagation(); if (!ready()) return; recording = i; rec.classList.add("recording"); rec.setPointerCapture && rec.setPointerCapture(e.pointerId); };
+      const stop = () => { if (recording === i) recording = -1; rec.classList.remove("recording"); };
+      rec.addEventListener("pointerdown", start);
+      rec.addEventListener("pointerup", stop); rec.addEventListener("pointercancel", stop); rec.addEventListener("lostpointercapture", stop);
+      el.querySelector("input[type=file]").addEventListener("change", async (e) => {
+        if (!ready()) return;
+        for (const f of e.target.files) {
+          try { const img = await FX.imageFromFile(f); addExample(i, img); } catch (err) { FX.toast(err.message); }
+        }
+        e.target.value = "";
+      });
+      box.appendChild(el);
+    });
+  }
+  function renderBars() {
+    document.getElementById("bars").innerHTML = classes.map((c, i) =>
+      `<div class="bar ${CSS[i]}"><span>${c.emo} ${c.name}</span><span class="track"><span class="fill" style="width:${lastProbs[i] * 100}%"></span></span><span class="pct">${Math.round(lastProbs[i] * 100)}%</span></div>`).join("");
+  }
+  function setBars(p) {
+    lastProbs = p;
+    document.querySelectorAll("#bars .bar").forEach((b, i) => {
+      b.querySelector(".fill").style.width = (p[i] * 100) + "%";
+      b.querySelector(".pct").textContent = Math.round(p[i] * 100) + "%";
+    });
+  }
+  function ready() {
+    if (!net) { FX.toast("The AI brain is still loading…"); return false; }
+    return true;
+  }
+
+  // ---------- learning ----------
+  function addExample(i, src) {
+    tf.tidy(() => {
+      const emb = net.infer(src, true);
+      knn.addExample(emb, i);        // knn keeps its own copy
+    });
+    classes[i].n++;
+    document.getElementById("count" + i).textContent = classes[i].n + " pics";
+    const t = document.createElement("canvas"); t.width = t.height = 72;
+    const tctx = t.getContext("2d");
+    const [w, h] = src === video ? [video.videoWidth, video.videoHeight] : [src.naturalWidth || src.width, src.naturalHeight || src.height];
+    const s = Math.min(w, h);
+    if (src === video) { tctx.translate(72, 0); tctx.scale(-1, 1); }
+    tctx.drawImage(src, (w - s) / 2, (h - s) / 2, s, s, 0, 0, 72, 72);
+    const th = document.getElementById("thumbs" + i);
+    th.prepend(t);
+    while (th.children.length > 9) th.lastChild.remove();
+    const total = classes.reduce((a, c) => a + c.n, 0);
+    if (total === 40) { FX.confetti(); FX.toast("It's learning! Now show it each thing and watch the bars."); }
+  }
+
+  let lastRec = 0, busy = false;
+  async function predict(src) {
+    if (!net || busy || !src) return;
+    if (knn.getNumClasses() < 2) { setBars([0, 0, 0]); document.getElementById("overlay").innerHTML = '<span class="muted" style="font-size:.6em">Record at least 2 classes to start guessing</span>'; return; }
+    busy = true;
+    try {
+      const emb = net.infer(src, true);
+      // K no bigger than the smallest class, or a tiny class gets outvoted by sheer numbers
+      const k = Math.max(1, Math.min(10, ...classes.filter((c) => c.n).map((c) => c.n)));
+      const res = await knn.predictClass(emb, k);
+      emb.dispose();
+      const p = classes.map((_, i) => res.confidences[i] || 0);
+      setBars(p);
+      const b = p.indexOf(Math.max(...p));
+      document.getElementById("overlay").innerHTML = `<span class="emo">${classes[b].emo}</span><span class="${CSS[b]}">${classes[b].name}</span>`;
+    } catch (e) { console.warn(e); }
+    busy = false;
+  }
+  function loop(t) {
+    requestAnimationFrame(loop);
+    if (!net || !camOn || video.readyState < 2) return;
+    if (recording >= 0) { if (t - lastRec > 90) { lastRec = t; addExample(recording, video); } return; }
+    predict(video);
+  }
+
+  // ---------- camera or photo fallback ----------
+  async function startCam() {
+    msg.classList.add("hidden");
+    try {
+      await FX.startCamera(video);
+      camOn = true; lab.classList.remove("nocam");
+      video.style.display = "block"; still.style.display = "none";
+      document.getElementById("start").style.display = "none";
+    } catch (e) {
+      noCam("📷 " + (e.friendly || e.message));
+    }
+  }
+  function placeholder(text) {
+    sctx.fillStyle = "#0a0720"; sctx.fillRect(0, 0, still.width, still.height);
+    sctx.fillStyle = "#b7b0d8"; sctx.font = "600 26px Outfit, sans-serif"; sctx.textAlign = "center";
+    sctx.fillText(text, still.width / 2, still.height / 2);
+  }
+  function noCam(why) {
+    camOn = false; lab.classList.add("nocam");
+    video.style.display = "none"; still.style.display = "block";
+    placeholder("No camera — train with photos instead 📁");
+    notice(why + "<br><b>Plan B:</b> add a few photos to each class with 📁, then press 🔍 to test a new photo.");
+  }
+  document.getElementById("start").addEventListener("click", startCam);
+  document.getElementById("testFile").addEventListener("change", async (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    try {
+      stillImg = await FX.imageFromFile(f);
+      const s = Math.min(still.width / stillImg.width, still.height / stillImg.height);
+      sctx.fillStyle = "#000"; sctx.fillRect(0, 0, still.width, still.height);
+      sctx.drawImage(stillImg, (still.width - stillImg.width * s) / 2, (still.height - stillImg.height * s) / 2, stillImg.width * s, stillImg.height * s);
+      await predict(stillImg);
+    } catch (err) { FX.toast(err.message); }
+  });
+  document.getElementById("reset").addEventListener("click", () => {
+    if (knn) knn.clearAllClasses();
+    classes.forEach((c) => (c.n = 0));
+    renderClasses(); setBars([0, 0, 0]);
+    document.getElementById("overlay").innerHTML = "";
+  });
+
+  // ---------- load the model ----------
+  async function boot() {
+    renderClasses(); renderBars();
+    placeholder("Press 🎥 Start camera");
+    const ready = (m) => { knn = knnClassifier.create(); net = m; msg.classList.add("hidden"); say("✅ AI brain ready — press Start, then hold a button to record examples", "ok"); };
+    let loading = null;
+    try {
+      await FX.need("tf"); await FX.need("mobilenet"); await FX.need("knnClassifier");
+      // The model ships with the site (models/), so it works even where Google's
+      // model hosting is blocked; the online copy is only a fallback.
+      const local = new URL("../models/mobilenet_v2_050/model.json", location.href).href;
+      loading = mobilenet.load({ version: 2, alpha: 0.5, modelUrl: local })
+        .catch((err) => { console.warn("local MobileNet failed, trying online", err); return mobilenet.load({ version: 2, alpha: 0.5 }); });
+      ready(await FX.timeout(loading, 45000, "Downloading MobileNet"));
+    } catch (e) {
+      console.error(e);
+      say("❌ The AI brain couldn't load", "bad");
+      notice("🌐 " + e.message + "<br>This one needs internet to download an 8 MB model. The <a href='doodle.html' style='color:var(--cyan)'>Doodle Trainer</a> works offline and teaches the same idea.");
+      if (loading) loading.then(ready).catch(() => {});   // slow wifi: still switch on if it arrives late
+    }
+  }
+  boot();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
