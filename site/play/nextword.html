@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20100%20100%27%3E%3Ctext%20y%3D%27.9em%27%20font-size%3D%2790%27%3E%F0%9F%92%AC%3C/text%3E%3C/svg%3E">
+<title>Mini ChatGPT · AI Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=JetBrains+Mono:wght@500&family=Outfit:wght@400;600;800&display=swap">
+<link rel="stylesheet" href="../css/theme.css">
+<script>/* before first paint: embedded in the deck? (fx.js loads later, after any CDN libraries) */if(/[?&]embed=1\b/.test(location.search)||window.self!==window.top)document.documentElement.classList.add("embedded");</script>
+<style>
+  .lab { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(290px, 1fr); gap: 14px; align-items: start; }
+  @media (max-width: 900px) { .lab { grid-template-columns: 1fr; } }
+  .side h3 { font-size: 1rem; margin: 0 0 .35rem; color: var(--muted); font-family: var(--font-body); font-weight: 600; }
+  .story { font: 500 clamp(1.15rem, 2vw, 1.7rem)/1.5 var(--font-body); min-height: 6.5em; max-height: 42vh; overflow-y: auto; padding: .6em .9em; border-radius: 18px; background: rgba(0,0,0,.28); border: 1px solid var(--stroke); }
+  .story .t { animation: fadein .35s ease both; }
+  .story .ctx { color: var(--cyan); text-shadow: 0 0 14px rgba(34,228,255,.8); border-bottom: 2px dashed var(--cyan); }
+  .story .caret { display: inline-block; width: .55em; height: 1.1em; vertical-align: -.15em; background: var(--pink); margin-left: .15em; animation: blink 1s steps(2) infinite; border-radius: 2px; }
+  @keyframes fadein { from { opacity: 0; filter: blur(6px); } }
+  @keyframes blink { 50% { opacity: 0; } }
+  .look { font-weight: 700; }
+  .look .chip { display: inline-block; padding: .1em .6em; border-radius: 10px; background: rgba(34,228,255,.15); border: 1px solid var(--cyan); margin: 0 .15em; }
+  .cands { display: grid; gap: 6px; }
+  .cand { all: unset; cursor: pointer; display: grid; grid-template-columns: 8.5em 1fr 4.2em; align-items: center; gap: 8px; font-weight: 700; padding: 3px 6px; border-radius: 10px; }
+  .cand:hover, .cand:focus-visible { background: rgba(255,255,255,.08); }
+  .cand .word { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cand .track { height: 1.2rem; border-radius: 999px; background: rgba(255,255,255,.07); overflow: hidden; }
+  .cand .fill { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #6b3fe0, var(--pink)); box-shadow: var(--glow-pink); transition: width .3s ease; }
+  .cand:first-child .fill { background: linear-gradient(90deg, #0fa3c4, var(--cyan)); box-shadow: var(--glow-cyan); }
+  .cand .pct { text-align: right; font-family: var(--font-mono); font-size: .85em; color: var(--muted); }
+  .seg .btn { font-size: .9rem; }
+  textarea { width: 100%; min-height: 7em; font: 500 1rem var(--font-body); color: var(--ink); background: var(--glass-2); border: 1px solid var(--stroke); border-radius: var(--radius-sm); padding: .6em; resize: vertical; }
+  .stats { font-family: var(--font-mono); font-size: .85rem; color: var(--muted); }
+  .temp { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; font-size: 1.3rem; }
+  .gpt { border: 1px solid rgba(255,212,59,.5); background: rgba(255,212,59,.07); border-radius: var(--radius-sm); padding: .6em .8em; line-height: 1.4; font-size: .92rem; }
+</style>
+</head>
+<body class="play" data-py="nextword">
+<div class="aurora"></div><canvas id="particles"></canvas>
+
+<header class="top">
+  <h1>💬 <span class="grad">Mini ChatGPT</span></h1>
+  <a class="back" href="./">← all activities</a>
+</header>
+
+<main class="lab">
+  <section class="glass panel stack">
+    <div class="story" id="story" aria-live="polite"></div>
+    <div class="look" id="look"></div>
+    <div class="cands" id="cands"></div>
+    <div class="row">
+      <button class="btn primary" id="auto">✨ Auto-write</button>
+      <button class="btn" id="undo">↩ Undo</button>
+      <button class="btn" id="restart">🧹 New story</button>
+      <input type="text" id="start" value="Alice was" aria-label="Start of the story" style="flex:1;min-width:8em">
+    </div>
+    <div class="temp"><span title="safe: always the most likely word">🥶</span><input type="range" id="temp" min="0.1" max="2" step="0.1" value="0.8" aria-label="creativity"><span title="creative: surprising words">🤪</span></div>
+  </section>
+
+  <aside class="glass panel stack side">
+    <div>
+      <h3>1 · How many words does it look back?</h3>
+      <div class="row seg" id="order">
+        <button class="btn" data-n="1">👀 1 word</button>
+        <button class="btn on" data-n="2">👀👀 2 words</button>
+      </div>
+    </div>
+    <div>
+      <h3>2 · What did it read?</h3>
+      <div class="row seg" id="src">
+        <button class="btn on" data-src="alice">📖 Alice in Wonderland</button>
+        <button class="btn" data-src="own">✍️ Your own text</button>
+      </div>
+      <div id="ownBox" hidden style="margin-top:8px">
+        <textarea id="own" placeholder="Paste a story, song lyrics, a Wikipedia article… (more text = better)"></textarea>
+        <button class="btn cyan" id="trainOwn" style="margin-top:6px">🧠 Learn this text</button>
+      </div>
+      <p class="stats" id="stats"></p>
+    </div>
+    <div class="gpt">🤖 <b>This is how ChatGPT writes</b>: predict the next word, add it, repeat. The difference? ChatGPT looks back at <b>thousands</b> of words, not 1 or 2, and learned from <b>trillions</b> of words with a giant neural network instead of simple counting.</div>
+  </aside>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+<script src="../js/fx.js"></script>
+<script src="../js/python-snippets.js"></script>
+<script src="../js/python-panel.js"></script>
+<script>
+(function () {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const FALLBACK = `Alice was beginning to get very tired of sitting by her sister on the bank. The White Rabbit ran close by her. Alice was not a bit hurt. The Queen was in a furious passion. The Hatter was the first to break the silence. The Cat only grinned when it saw Alice.`;
+
+  let order = 2, src = "alice", M = null, story = [], history = [], timer = 0, aliceText = null;
+
+  const tokenize = (t) => t.replace(/[“”"_*]/g, "").replace(/[‘’]/g, "'").match(/[A-Za-z']+|[.,!?;:]/g) || [];
+
+  // Count: after these 1 (or 2) words, which word came next, how often?
+  function build(text) {
+    const t0 = performance.now(), raw = tokenize(text), low = raw.map((w) => w.toLowerCase());
+    const next1 = new Map(), next2 = new Map(), caps = new Map();
+    const bump = (m, k, w) => { let c = m.get(k); if (!c) m.set(k, (c = new Map())); c.set(w, (c.get(w) || 0) + 1); };
+    for (let i = 0; i < low.length - 1; i++) {
+      bump(next1, low[i], low[i + 1]);
+      if (i > 0) bump(next2, low[i - 1] + " " + low[i], low[i + 1]);
+    }
+    // Remember how each word is usually written (Alice, Queen, I…) so the story looks right.
+    raw.forEach((w, i) => { if (i && !/[.!?]/.test(raw[i - 1]) && /^[A-Z]/.test(w)) caps.set(w.toLowerCase(), (caps.get(w.toLowerCase()) || 0) + 1); });
+    const count = new Map(); low.forEach((w) => count.set(w, (count.get(w) || 0) + 1));
+    const proper = new Set([...caps].filter(([w, c]) => c > (count.get(w) || 0) * 0.6).map(([w]) => w));
+    M = { next1, next2, proper, words: low.length, vocab: count.size, starts: low.filter((w, i) => i && low[i - 1] === ".") };
+    $("stats").textContent = `learned from ${M.words.toLocaleString()} words · knows ${M.vocab.toLocaleString()} different words · counted in ${Math.max(1, Math.round(performance.now() - t0))} ms`;
+  }
+
+  function candidates() {
+    const w = story.map((s) => s.toLowerCase());
+    let used = 0, m = null;
+    if (order === 2 && w.length >= 2) { m = M.next2.get(w[w.length - 2] + " " + w[w.length - 1]); if (m) used = 2; }
+    if (!m && w.length >= 1) { m = M.next1.get(w[w.length - 1]); if (m) used = 1; }
+    if (!m) return { used: 0, list: [] };
+    const total = [...m.values()].reduce((a, b) => a + b, 0);
+    return { used, list: [...m.entries()].sort((a, b) => b[1] - a[1]).map(([word, c]) => ({ word, c, p: c / total })) };
+  }
+
+  const pretty = (w, i) => {
+    const prev = story[i - 1];
+    if (/^[.,!?;:]$/.test(w)) return w;
+    if (w === "i") return "I";
+    if (i === 0 || /[.!?]/.test(prev || "")) return w[0].toUpperCase() + w.slice(1);
+    return M.proper.has(w.toLowerCase()) ? w[0].toUpperCase() + w.slice(1) : w;
+  };
+
+  function render(animateLast) {
+    const { used, list } = candidates();
+    const n = story.length;
+    $("story").innerHTML = story.map((w, i) => {
+      const cls = ["t"]; if (i >= n - used) cls.push("ctx");
+      const sp = /^[.,!?;:]$/.test(w) || i === 0 ? "" : " ";
+      return `${sp}<span class="${cls.join(" ")}" ${animateLast && i === n - 1 ? "" : 'style="animation:none"'}>${pretty(w, i)}</span>`;
+    }).join("") + '<span class="caret"></span>';
+    $("story").scrollTop = 1e6;
+    const ctx = story.slice(n - used).map((w, i) => pretty(w, n - used + i));
+    $("look").innerHTML = used
+      ? `After ${ctx.map((w) => `<span class="chip">${w}</span>`).join("")} it read… <span class="muted" style="font-weight:500">${used < order ? "(never saw those 2 words together — fell back to 1)" : ""}</span>`
+      : '<span class="muted">It never saw that word. Press 🧹 New story or type a different start.</span>';
+    const box = $("cands"); box.innerHTML = "";
+    list.slice(0, 7).forEach((c) => {
+      const b = document.createElement("button"); b.className = "cand";
+      b.innerHTML = `<span class="word">${/^[.,!?;:]$/.test(c.word) ? `“${c.word}”` : c.word}</span><span class="track"><span class="fill" style="width:0"></span></span><span class="pct">${Math.round(c.p * 100)}% ×${c.c}</span>`;
+      b.addEventListener("click", () => add(c.word));
+      box.appendChild(b);
+      requestAnimationFrame(() => (b.querySelector(".fill").style.width = Math.max(3, c.p * 100) + "%"));
+    });
+    if (list.length > 7) box.insertAdjacentHTML("beforeend", `<span class="muted" style="font-size:.9rem">…and ${list.length - 7} more words it has seen here</span>`);
+  }
+
+  function add(w) { history.push(story.slice()); story.push(w); render(true); }
+
+  // Temperature: low = nearly always the top word; high = surprising picks.
+  function pick() {
+    const { list } = candidates();
+    if (!list.length) { const s = M.starts; return s[Math.floor(Math.random() * s.length)] || "the"; }
+    const T = +$("temp").value;
+    const ws = list.map((c) => Math.pow(c.p, 1 / T)), sum = ws.reduce((a, b) => a + b, 0);
+    let r = Math.random() * sum;
+    for (let i = 0; i < list.length; i++) { r -= ws[i]; if (r <= 0) return list[i].word; }
+    return list[0].word;
+  }
+
+  function restart() {
+    stopAuto();
+    const s = tokenize($("start").value).map((w) => w.toLowerCase());
+    story = s.length ? s : ["alice"]; history = [];
+    render(false);
+  }
+  function stopAuto() { clearInterval(timer); timer = 0; $("auto").textContent = "✨ Auto-write"; }
+  $("auto").addEventListener("click", () => {
+    if (timer) return stopAuto();
+    $("auto").textContent = "⏸ Stop";
+    timer = setInterval(() => { add(pick()); if (story.length > 160) stopAuto(); }, 380);
+  });
+  $("undo").addEventListener("click", () => { if (history.length) { story = history.pop(); render(false); } });
+  $("restart").addEventListener("click", restart);
+  $("start").addEventListener("keydown", (e) => { if (e.key === "Enter") restart(); });
+
+  $("order").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-n]"); if (!b) return;
+    order = +b.dataset.n;
+    $("order").querySelectorAll(".btn").forEach((x) => x.classList.toggle("on", x === b));
+    render(false);
+    FX.toast(order === 1 ? "Looking at just 1 word: sentences drift into nonsense faster." : "Looking at 2 words: more sensible — ChatGPT looks at thousands!", 3200);
+  });
+  $("src").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-src]"); if (!b) return;
+    src = b.dataset.src;
+    $("src").querySelectorAll(".btn").forEach((x) => x.classList.toggle("on", x === b));
+    $("ownBox").hidden = src !== "own";
+    if (src === "alice") { build(aliceText || FALLBACK); $("start").value = "Alice was"; restart(); }
+  });
+  $("trainOwn").addEventListener("click", () => {
+    const t = $("own").value;
+    if (tokenize(t).length < 30) return FX.toast("Give it at least a few sentences (30+ words) ✍️", 3000);
+    build(t);
+    $("start").value = tokenize(t).slice(0, 1).join(" ");
+    restart(); FX.confetti({ particleCount: 60 });
+    FX.toast("Learned your text! Now press ✨ Auto-write — it will sound like YOU.", 3500);
+  });
+  $("own").addEventListener("keydown", (e) => e.stopPropagation());
+
+  (async () => {
+    try {
+      const r = await FX.timeout(fetch("../data/alice.txt"), 20000, "Loading the book");
+      if (!r.ok) throw new Error("book missing");
+      aliceText = await r.text();
+    } catch (err) {
+      FX.toast("Couldn't load the whole book — using a short piece instead.", 3500);
+    }
+    build(aliceText || FALLBACK);
+    restart();
+  })();
+})();
+</script>
+</body>
+</html>

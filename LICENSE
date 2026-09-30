@@ -4,7 +4,9 @@ This repository is dual-licensed, which is standard for teaching material.
 CONTENT — CC BY 4.0
 ================================================================
 Applies to: docs/, the slide text and speaker notes in site/index.html,
-the activity texts, and the illustration site/img/street.svg.
+the activity texts (including the Mood Reader sentences), the Python programs
+in tools/python_snippets.py and notebooks/, and the illustration
+site/img/street.svg.
 
 Licensed under the Creative Commons Attribution 4.0 International License.
 You may share and adapt this material for any purpose, including
@@ -44,6 +46,21 @@ THIRD-PARTY
 site/models/ — pretrained TensorFlow.js models (MobileNet v2, COCO-SSD
 lite) by Google, Apache License 2.0. See site/models/README.md.
 
+site/data/mnist_images.png, mnist_labels.bin — a 11,000-digit subset of the
+MNIST database, Yann LeCun, Corinna Cortes and Christopher J.C. Burges,
+licensed CC BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0/).
+Regenerate with tools/build_mnist.py.
+
+site/data/breast_cancer.json — Breast Cancer Wisconsin (Diagnostic) data set,
+W. Wolberg, O. Mangasarian, N. Street and W. Street, UCI Machine Learning
+Repository, https://doi.org/10.24432/C5DW2B, licensed CC BY 4.0.
+Regenerate with tools/build_medical.py.
+
+site/data/alice.txt — Lewis Carroll, Alice's Adventures in Wonderland (1865),
+public domain; text from Project Gutenberg with their header and licence
+removed. Regenerate with tools/build_corpus.py.
+
 Loaded from cdn.jsdelivr.net at runtime, not redistributed here:
 reveal.js (MIT), canvas-confetti (ISC), qrcode-generator (MIT),
-TensorFlow.js and tfjs-models (Apache 2.0). Fonts from Google Fonts (OFL).
+TensorFlow.js and tfjs-models (Apache 2.0), Prism (MIT). Fonts from Google
+Fonts (OFL).

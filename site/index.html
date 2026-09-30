@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20100%20100%27%3E%3Ctext%20y%3D%27.9em%27%20font-size%3D%2790%27%3E%F0%9F%A7%A0%3C/text%3E%3C/svg%3E">
 <title>Can a Computer Learn? · AI Workshop</title>
 <meta name="description" content="A one-hour, hands-on introduction to AI and machine learning for high-school students. Everything runs in the browser.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -30,8 +31,9 @@
   </div>
   <h1><span class="grad">Can a computer learn?</span></h1>
   <p class="lead">A one-hour, hands-on crash course in AI &amp; machine learning</p>
+  <p class="presenter"><span>🎓</span> Dr. Rachid Zeghlache</p>
   <aside class="notes">
-    0:00 — 1 min. Welcome. Don't explain anything yet. "In the next hour you will train three AIs yourselves — one with your drawings, one with your camera, and you'll label data like the people behind self-driving cars."
+    0:00 — 1 min. Welcome. Don't explain anything yet. "In the next hour you will train SEVEN AIs yourselves — with your drawings, your camera, your words and real hospital data — and see how every one of them looks in Python."
     Check the projector shows the whole slide; press F for fullscreen. S opens this speaker view.
   </aside>
 </section>
@@ -58,19 +60,20 @@
     <h2>🤖 <span class="grad">AI or Not?</span></h2>
     <span class="muted">Drag each card. Shout your answer first!</span>
     <span class="spacer"></span>
-    <button class="btn timer" data-sec="360"></button>
+    <button class="btn timer" data-sec="300"></button>
+    <button class="btn py" data-py="ai-or-not">🐍 Python</button>
     <a class="btn" href="play/ai-or-not.html" target="_blank" rel="noopener">↗ open</a>
   </div>
   <iframe class="frame" data-lazy="play/ai-or-not.html" title="AI or Not game"></iframe>
   <aside class="notes">
-    0:03 — 6 min. Call students up to the screen (or let the room vote per card, you drag). Read each explanation aloud.
+    0:03 — 5 min. Call students up to the screen (or let the room vote per card, you drag). Read each explanation aloud.
     Traffic light is a trick card: most are timers, some new ones use AI. Face filters surprise people.
     Land the rule on the final message: AI LEARNS FROM EXAMPLES, normal programs FOLLOW RULES someone wrote.
     Keyboard: click in the game then arrows still change slides.
   </aside>
 </section>
 
-<!-- ===================================================== 0:09 RULES VS LEARNING -->
+<!-- ===================================================== 0:08 RULES VS LEARNING -->
 <section>
   <p class="kicker">The big idea</p>
   <h2>Rules vs. <span class="grad">learning</span></h2>
@@ -95,12 +98,12 @@
     </div>
   </div>
   <aside class="notes">
-    0:09 — 2 min. Left side first: a programmer writes the rules. Then reveal the right side: we give data AND the answers, and the computer produces the rules. Same boxes, flipped.
+    0:08 — 2 min. Left side first: a programmer writes the rules. Then reveal the right side: we give data AND the answers, and the computer produces the rules. Same boxes, flipped.
     Example: nobody can write rules for "what does a cat look like" — too many cats. So we show 10 000 cat photos instead.
   </aside>
 </section>
 
-<!-- ===================================================== 0:11 AI / ML / DL -->
+<!-- ===================================================== 0:10 AI / ML / DL -->
 <section>
   <p class="kicker">Words you'll hear</p>
   <div class="nest-wrap">
@@ -116,23 +119,24 @@
     </div>
   </div>
   <aside class="notes">
-    0:11 — 2 min. Three clicks, one ring each. Russian dolls: every deep learning system is machine learning, every ML system is AI — not the other way round.
+    0:10 — 1 min. Three clicks, one ring each. Russian dolls: every deep learning system is machine learning, every ML system is AI — not the other way round.
     Today: first we do machine learning by hand (next slide), then deep learning with the camera.
   </aside>
 </section>
 
-<!-- ===================================================== 0:13 TEACH THE COMPUTER -->
+<!-- ===================================================== 0:11 TEACH THE COMPUTER -->
 <section class="act" data-prevent-swipe>
   <div class="act-head">
     <h2>🎯 <span class="grad">Teach the Computer</span></h2>
     <span class="muted">Cats, dogs or hamsters? Tap to add examples.</span>
     <span class="spacer"></span>
-    <button class="btn timer" data-sec="480"></button>
+    <button class="btn timer" data-sec="360"></button>
+    <button class="btn py" data-py="teach">🐍 Python</button>
     <a class="btn" href="play/teach.html" target="_blank" rel="noopener">↗ open</a>
   </div>
   <iframe class="frame" data-lazy="play/teach.html" title="Teach the computer: nearest neighbours"></iframe>
   <aside class="notes">
-    0:13 — 8 min. The heart of the hour.
+    0:11 — 6 min. The heart of the hour.
     1) Clear. Add ONE cat and ONE dog: the whole board splits in two — the computer's first "rule".
     2) Press 🎲 Starter examples. Hover: dashed lines show the K nearest examples voting. Ask "is a big, not-fluffy animal a cat or a dog?"
     3) Set K = 1, press 😈 Add a weird one: an island appears around one strange example — the model memorised a mistake (overfitting).
@@ -142,14 +146,14 @@
   </aside>
 </section>
 
-<!-- ===================================================== 0:21 DATA LABELLING -->
+<!-- ===================================================== 0:17 DATA LABELLING -->
 <section class="center">
   <p class="kicker">Plot twist</p>
   <h2>Where do the <span class="grad">examples</span> come from?</h2>
   <p class="lead fragment">From <b>people</b>. Millions of photos, drawings and sentences — each one labelled by a human.</p>
-  <p class="lead fragment">For the next 8 minutes, <b class="c2">you</b> are the data labeller. ✍️</p>
+  <p class="lead fragment">For the next few minutes, <b class="c2">you</b> are the data labeller. ✍️</p>
   <aside class="notes">
-    0:21 — 30 s. Quick transition. ImageNet: 14 million images labelled by people. Self-driving cars: millions of boxes drawn by hand.
+    0:17 — 30 s. Quick transition. ImageNet: 14 million images labelled by people. Self-driving cars: millions of boxes drawn by hand.
   </aside>
 </section>
 
@@ -158,12 +162,13 @@
     <h2>✏️ <span class="grad">Doodle Trainer</span></h2>
     <span class="muted">Draw → save with a label → draw a new one → does it guess?</span>
     <span class="spacer"></span>
-    <button class="btn timer" data-sec="240"></button>
+    <button class="btn timer" data-sec="210"></button>
+    <button class="btn py" data-py="doodle">🐍 Python</button>
     <a class="btn" href="play/doodle.html" target="_blank" rel="noopener">↗ open</a>
   </div>
   <iframe class="frame" data-lazy="play/doodle.html" title="Doodle trainer"></iframe>
   <aside class="notes">
-    0:21 — 4 min. Get 3 volunteers to draw 3 suns, 3 houses, 3 moons (or rename the classes — anything the room shouts).
+    0:17 — 3½ min. Get 3 volunteers to draw 3 suns, 3 houses, 3 moons (or rename the classes — anything the room shouts).
     Then someone draws a NEW one: the bars move live while drawing.
     If it's wrong: save it with the right label — "that's literally how AI gets better: more, better-labelled data".
     Then ask someone to draw a sun really badly, or a star — it still picks one of the three. It can only choose between what it knows.
@@ -174,36 +179,39 @@
 <section class="act" data-prevent-swipe>
   <div class="act-head">
     <h2>🔲 <span class="grad">Box Labeller</span></h2>
+    <span class="pill bonus">🎁 bonus</span>
     <span class="muted">Box every object and label it — like the people who train self-driving cars.</span>
     <span class="spacer"></span>
     <button class="btn timer" data-sec="240"></button>
+    <button class="btn py" data-py="annotate">🐍 Python</button>
     <a class="btn" href="play/annotate.html" target="_blank" rel="noopener">↗ open</a>
   </div>
   <iframe class="frame" data-lazy="play/annotate.html" title="Bounding box annotation"></iframe>
   <aside class="notes">
-    0:25 — 4 min. One student boxes; the room calls out objects. Six to find: sun, house, tree, person, cat, car.
+    🎁 BONUS — skip it (→) when running to time; use it if the room is fast or students have devices (3–4 min). One student boxes; the room calls out objects. Six to find: sun, house, tree, person, cat, car.
     Point to the green text: this is what the AI actually receives — numbers, not a picture of a box.
     Press 👁️ Compare with expert: overlap score. "A sloppy box teaches the AI sloppy." Real annotators do thousands a day.
     If students have devices: QR code at the end — they can all try this one.
   </aside>
 </section>
 
-<!-- ===================================================== 0:29 HOW A COMPUTER SEES -->
+<!-- ===================================================== 0:21 HOW A COMPUTER SEES -->
 <section class="act" data-prevent-swipe>
   <div class="act-head">
     <h2>👁️ <span class="grad">How a Computer Sees</span></h2>
     <span class="muted">A picture is just a grid of numbers.</span>
     <span class="spacer"></span>
-    <button class="btn timer" data-sec="420"></button>
+    <button class="btn timer" data-sec="240"></button>
+    <button class="btn py" data-py="pixels">🐍 Python</button>
     <a class="btn" href="play/pixels.html" target="_blank" rel="noopener">↗ open</a>
   </div>
   <iframe class="frame" data-lazy="play/pixels.html" allow="camera; fullscreen" title="Pixels and filters"></iframe>
   <aside class="notes">
-    0:29 — 7 min. Press 🎥 Camera (allow it; the sample picture is the fallback).
+    0:21 — 4 min. Press 🎥 Camera (allow it; the sample picture is the fallback).
     1) Pixel size slider all the way up: the numbers appear. "This is ALL the computer gets. No 'face', just numbers."
     2) Slide back down to normal: 307 200 numbers per frame, 30 frames a second.
     3) ✴️ Edges: wave your hand. The 3×3 grid of numbers is a FILTER sliding over the picture. Show blur / emboss.
-    Punchline: a neural network's first layer learns filters like these on its own, then stacks them: edges → shapes → objects. (Next slide.)
+    Punchline: a neural network's first layer learns filters like these on its own, then stacks them: edges → shapes → objects. (Next slide.) Keep it brisk: two filters are enough.
   </aside>
 </section>
 
@@ -215,23 +223,46 @@
     <span class="c1">📷 pixels</span><span style="color:var(--violet)">〰️ edges</span><span class="c2">🔷 shapes</span><span class="c3">🐱 "cat!"</span>
   </div>
   <aside class="notes">
-    0:36 — 1 min. Each dot is a tiny calculator. Signals flow left to right. Early layers find edges, middle layers combine edges into shapes (eyes, wheels), the last layer says what it is.
-    "Deep" just means many layers. Training = adjusting millions of numbers until the answers come out right. Next: we train one in 30 seconds.
+    0:25 — 1 min. Each dot is a tiny calculator. Signals flow left to right. Early layers find edges, middle layers combine edges into shapes (eyes, wheels), the last layer says what it is.
+    "Deep" just means many layers. Training = adjusting millions of numbers until the answers come out right. Next: YOU design one and train it in 10 seconds.
   </aside>
 </section>
 
-<!-- ===================================================== 0:37 COMPUTER VISION LIVE -->
+<!-- ===================================================== 0:26 BUILD A BRAIN -->
+<section class="act" data-prevent-swipe>
+  <div class="act-head">
+    <h2>🧠 <span class="grad">Build a Brain</span></h2>
+    <span class="muted">Design the layers. Train on 10,000 digits. Draw one.</span>
+    <span class="spacer"></span>
+    <button class="btn timer" data-sec="420"></button>
+    <button class="btn py" data-py="digits">🐍 Python</button>
+    <a class="btn" href="play/digits.html" target="_blank" rel="noopener">↗ open</a>
+  </div>
+  <iframe class="frame" data-lazy="play/digits.html" title="Build a Brain"></iframe>
+  <aside class="notes">
+    0:26 — 7 min. THE deep learning moment: they design a neural network and train it live, in the browser.
+    1) Press 🏋️ Train with the default 64 → 32: ~10 seconds, ~95%. Watch the green line climb and the pink "mistakes" line fall. Connections turn cyan (yes!) and pink (no!) as it learns.
+    2) Volunteer draws a digit on the right: neurons light up, the answer glows. Try a sloppy 4, a 7 with a bar, a 1 with a hat.
+    3) Race! Press "no layers" → Train (~91%), then "big brain" (~96%, slower). The 🏆 table keeps score. More layers = more numbers to learn = smarter, but slower — and it can still be fooled.
+    4) Tap a digit in "😬 Digits it got wrong": most are genuinely ugly. Even humans would hesitate.
+    Press 🐍 Python: the same brain in 14 lines of Keras.
+    Offline? The digits are bundled on this site; only TensorFlow.js comes from the CDN.
+  </aside>
+</section>
+
+<!-- ===================================================== 0:33 COMPUTER VISION LIVE -->
 <section class="act" data-prevent-swipe>
   <div class="act-head">
     <h2>📸 <span class="grad">Train a Camera AI</span></h2>
     <span class="muted">Hold a button to record examples. Then test it.</span>
     <span class="spacer"></span>
-    <button class="btn timer" data-sec="420"></button>
+    <button class="btn timer" data-sec="300"></button>
+    <button class="btn py" data-py="teachable">🐍 Python</button>
     <a class="btn" href="play/teachable.html" target="_blank" rel="noopener">↗ open</a>
   </div>
   <iframe class="frame" data-lazy="play/teachable.html" allow="camera; fullscreen" title="Train a camera classifier"></iframe>
   <aside class="notes">
-    0:37 — 7 min. Loads an 8 MB model (MobileNet, served from this site) — give it a few seconds. Press 🎥 Start camera.
+    0:33 — 5 min. Loads an 8 MB model (MobileNet, served from this site) — give it a few seconds. Press 🎥 Start camera.
     1) One volunteer in front of the camera. Hold "Thumbs up" while they show a thumb (~30 pics), "Open hand" (~30), "Just me" (~30).
     2) Watch the bars jump live. Confetti at 40 pictures.
     3) BIAS MOMENT: now swap in a different person, or stand far away, or cover the lights. It gets confused. Ask WHY → it only ever saw one person in one spot.
@@ -259,7 +290,7 @@
     </div>
   </div>
   <aside class="notes">
-    0:44 — 2 min. Link the camera demo to the real world. The companies improved their systems after the study was published — checking works.
+    0:38 — 2 min. Link the camera demo to the real world. The companies improved their systems after the study was published — checking works.
     Ask: "Who should be in the room when an AI is built?"
   </aside>
 </section>
@@ -267,21 +298,93 @@
 <section class="act" data-prevent-swipe>
   <div class="act-head">
     <h2>🔍 <span class="grad">Object Detector</span></h2>
+    <span class="pill bonus">🎁 bonus</span>
     <span class="muted">A real AI trained on 200 000+ hand-labelled photos. What can it spot?</span>
     <span class="spacer"></span>
     <button class="btn timer" data-sec="180"></button>
+    <button class="btn py" data-py="detect">🐍 Python</button>
     <a class="btn" href="play/detect.html" target="_blank" rel="noopener">↗ open</a>
   </div>
   <iframe class="frame" data-lazy="play/detect.html" allow="camera; fullscreen" title="Live object detection"></iframe>
   <aside class="notes">
-    0:46 — 3 min. Start camera. Hold up a phone, a bottle, a cup, a book, a backpack. People get boxes with a confidence %.
+    🎁 BONUS — skip it (→) when running to time (3 min). Start camera. Hold up a phone, a bottle, a cup, a book, a backpack. People get boxes with a confidence %.
     Callback: every box it draws, it learned from boxes humans drew — like the Box Labeller.
     Show it something not in its 80 classes (a pen, a shoe): it says nothing, or the wrong thing. Slide the threshold down to 10% → silly guesses appear. Confidence ≠ correctness.
     No camera? Press 🖼️ Sample, then slide the threshold to 15%: it finds the person — and calls the cartoon sun a "sports ball". Great laugh, great lesson.
   </aside>
 </section>
 
-<!-- ===================================================== 0:49 WHAT CAN AI DO -->
+<!-- ===================================================== 0:40 LANGUAGE -->
+<section class="center">
+  <p class="kicker">From pixels to words</p>
+  <h2>Can a computer <span class="grad">read</span>?</h2>
+  <p class="lead fragment">To a computer, a sentence is just numbers too — words become counts, and counts become patterns.</p>
+  <aside class="notes">
+    0:40 — 30 s. Transition. Same trick as the pictures: turn words into numbers, learn from labelled examples. Two quick demos: reading moods, then writing like ChatGPT.
+  </aside>
+</section>
+
+<section class="act" data-prevent-swipe>
+  <div class="act-head">
+    <h2>😀 <span class="grad">Mood Reader</span></h2>
+    <span class="muted">Type anything. Is it happy or sad? Watch every word vote.</span>
+    <span class="spacer"></span>
+    <button class="btn timer" data-sec="240"></button>
+    <button class="btn py" data-py="sentiment">🐍 Python</button>
+    <a class="btn" href="play/sentiment.html" target="_blank" rel="noopener">↗ open</a>
+  </div>
+  <iframe class="frame" data-lazy="play/sentiment.html" title="Mood Reader"></iframe>
+  <aside class="notes">
+    0:40 — 4 min. Ask the room for sentences. Each word gets a score it learned from 179 sentences people labelled.
+    1) "my friends are awesome" → 😀. "school was so boring today" → 😞. Point at the green/red word chips.
+    2) The pink buttons are traps: "this movie was not good" → HAPPY?! It only counts words; "good" wins. Sarcasm ("oh great, another Monday") fools it completely.
+    3) Teach it: type a sentence, press 😞 Sad — the word scores change instantly. One example isn't enough to fix "not": that's why real AIs need millions.
+    Link: ChatGPT-style models read word ORDER and context — next slide shows how they write.
+  </aside>
+</section>
+
+<section class="act" data-prevent-swipe>
+  <div class="act-head">
+    <h2>💬 <span class="grad">Mini ChatGPT</span></h2>
+    <span class="muted">It read Alice in Wonderland. Now it predicts the next word — again and again.</span>
+    <span class="spacer"></span>
+    <button class="btn timer" data-sec="300"></button>
+    <button class="btn py" data-py="nextword">🐍 Python</button>
+    <a class="btn" href="play/nextword.html" target="_blank" rel="noopener">↗ open</a>
+  </div>
+  <iframe class="frame" data-lazy="play/nextword.html" title="Mini ChatGPT"></iframe>
+  <aside class="notes">
+    0:44 — 5 min. The big reveal: ChatGPT's core job is "guess the next word".
+    1) Click the top word a few times: the bars are real counts from the book ("after 'the White'… Rabbit").
+    2) ✨ Auto-write with 👀👀 2 words: sounds almost like Alice. Switch to 👀 1 word: drifts into nonsense. Looking further back = more sense. ChatGPT looks back thousands of words.
+    3) Creativity slider: 🥶 = always the top word (repetitive), 🤪 = wild. ChatGPT has the same "temperature" setting!
+    4) ✍️ Your own text: paste song lyrics or a Wikipedia paragraph → it writes in that style. Bad data in, bad text out.
+    Hallucination explained: it picks LIKELY words, not TRUE ones.
+  </aside>
+</section>
+
+<!-- ===================================================== 0:49 MEDICINE -->
+<section class="act" data-prevent-swipe>
+  <div class="act-head">
+    <h2>🩺 <span class="grad">AI Doctor's Assistant</span></h2>
+    <span class="muted">569 real biopsies. Which mistake is worse?</span>
+    <span class="spacer"></span>
+    <button class="btn timer" data-sec="300"></button>
+    <button class="btn py" data-py="medical">🐍 Python</button>
+    <a class="btn" href="play/medical.html" target="_blank" rel="noopener">↗ open</a>
+  </div>
+  <iframe class="frame" data-lazy="play/medical.html" title="AI Doctor's Assistant"></iframe>
+  <aside class="notes">
+    0:49 — 5 min. Real data: breast-cancer biopsies from the University of Wisconsin. Each dot is a patient.
+    1) Press 🧠 Train: the yellow line swings into place as it learns. ~90% right on patients it never saw, from just 2 measurements.
+    2) Drag the ❓ new patient around: the risk meter follows.
+    3) THE question: look at 🚨 MISSED cancer vs ⚠️ false alarm. Which is worse? Slide the threshold down to 20%: fewer missed cancers, more false alarms. Doctors choose this trade-off — not the AI.
+    4) 🔬 Use all 30: ~94%. Better — but nobody can "see" 30 dimensions, so it's harder to explain.
+    Ethics line to say out loud: the AI assists, a doctor decides.
+  </aside>
+</section>
+
+<!-- ===================================================== 0:54 WHAT CAN AI DO -->
 <section>
   <p class="kicker">Beyond the classroom</p>
   <h2>What can <span class="grad">AI</span> do?</h2>
@@ -296,7 +399,7 @@
     <div class="glass gcard fragment"><span class="e">♟️</span><h3>Games</h3><p>AlphaGo beat the world Go champion in 2016 with moves no human had played.</p></div>
   </div>
   <aside class="notes">
-    0:49 — 4 min. Click through fast, 20–30 s each. Ask "which one would YOU want to work on?"
+    0:54 — 2 min. Click through fast — pick 3–4 cards. The 🩺 one: "you just did that". Ask "which one would YOU want to work on?"
     Everything here uses the same idea they just did: lots of labelled examples → a model learns the pattern.
   </aside>
 </section>
@@ -312,21 +415,32 @@
   </div>
   <p class="lead fragment" style="text-align:center;margin:0 auto">AI is a <b>tool</b>. It's only as good as its data — and the people using it.</p>
   <aside class="notes">
-    0:53 — 2 min. Not scary, just honest. Tie each back: hallucination = the doodle AI always picking one of three even for a star; bias = the camera demo.
+    0:56 — 1 min. Not scary, just honest. Tie each back: hallucination = Mini ChatGPT picking LIKELY words, not TRUE ones; bias = the camera demo; privacy = the medical data had to be anonymous.
   </aside>
 </section>
 
-<!-- ===================================================== 0:55 WRAP -->
+<!-- ===================================================== 0:57 WRAP -->
 <section>
   <p class="kicker">Remember three things</p>
   <h2>What you <span class="grad">learned</span> today</h2>
   <div class="take">
-    <div class="glass fragment"><div class="n c1">1</div><h3>AI learns from examples</h3><p class="muted">Not from rules someone wrote. You trained three yourselves.</p></div>
+    <div class="glass fragment"><div class="n c1">1</div><h3>AI learns from examples</h3><p class="muted">Not from rules someone wrote. You trained seven yourselves.</p></div>
     <div class="glass fragment"><div class="n c2">2</div><h3>Data is everything</h3><p class="muted">Humans choose and label it. Bad or narrow data → bad or unfair AI.</p></div>
     <div class="glass fragment"><div class="n c3">3</div><h3>Stay curious &amp; critical</h3><p class="muted">AI is powerful and can be wrong. Check it — and build it better.</p></div>
   </div>
   <aside class="notes">
-    0:55 — 2 min. Ask students to say each takeaway before you reveal it. Quick thumbs check.
+    0:57 — 1 min. Ask students to say each takeaway before you reveal it. Quick thumbs check.
+  </aside>
+</section>
+
+<!-- ===================================================== 0:58 PYTHON -->
+<section id="py-slide">
+  <p class="kicker">Want to build them for real?</p>
+  <h2>Every AI today, in <span class="grad">a few lines of Python</span></h2>
+  <div class="pygrid" id="pygrid"></div>
+  <p class="lead" style="margin:0 auto;text-align:center">Tap any card to see the code · all of them run free in <a href="https://colab.research.google.com/github/YouvenZ/ai-workshop-highschool/blob/main/notebooks/try-it-in-python.ipynb" target="_blank" rel="noopener">Google Colab 🐍</a></p>
+  <aside class="notes">
+    0:58 — 1 min. The hook for the keen ones: none of today's AIs is more than ~20 lines of Python. Tap one card (Build a Brain is the crowd-pleaser) to show the code. The Colab notebook runs everything with no install.
   </aside>
 </section>
 
@@ -334,7 +448,8 @@
   <p class="kicker">Keep playing at home</p>
   <div class="home">
     <div class="links">
-      <a class="glass" href="play/" target="_blank" rel="noopener">🧪 <span><b>Today's AI Lab</b><small>all 7 activities from this workshop</small></span></a>
+      <a class="glass" href="play/" target="_blank" rel="noopener">🧪 <span><b>Today's AI Lab</b><small>all 11 activities from this workshop</small></span></a>
+      <a class="glass" href="https://colab.research.google.com/github/YouvenZ/ai-workshop-highschool/blob/main/notebooks/try-it-in-python.ipynb" target="_blank" rel="noopener">🐍 <span><b>Try it in Python</b><small>every activity as code — runs free in Google Colab</small></span></a>
       <a class="glass" href="https://teachablemachine.withgoogle.com/" target="_blank" rel="noopener">📸 <span><b>Teachable Machine</b><small>train image, sound &amp; pose models — by Google</small></span></a>
       <a class="glass" href="https://quickdraw.withgoogle.com/" target="_blank" rel="noopener">✏️ <span><b>Quick, Draw!</b><small>can a neural network guess your doodle?</small></span></a>
       <a class="glass" href="https://machinelearningforkids.co.uk/" target="_blank" rel="noopener">🧩 <span><b>Machine Learning for Kids</b><small>build AI projects in Scratch</small></span></a>
@@ -346,7 +461,7 @@
     </div>
   </div>
   <aside class="notes">
-    0:57 — 1 min. Leave this up while students scan the QR code with their phone cameras. The activities work on phones.
+    0:59 — 30 s. Leave this up while students scan the QR code with their phone cameras. The activities work on phones.
   </aside>
 </section>
 
@@ -354,8 +469,9 @@
   <div style="font-size:min(14vh,14vw)">🎉</div>
   <h1><span class="grad">Thank you!</span></h1>
   <p class="lead">Questions? Ideas? What would <b>you</b> teach an AI?</p>
+  <p class="presenter"><span>🎓</span> Dr. Rachid Zeghlache</p>
   <aside class="notes">
-    0:58 — 2 min. Questions. If time: ask 2–3 students what they'd build with AI.
+    1:00 — Questions, while the confetti falls. If time: ask 2–3 students what they'd build with AI.
   </aside>
 </section>
 
@@ -367,6 +483,8 @@
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 <script src="js/fx.js"></script>
+<script src="js/python-snippets.js"></script>
+<script src="js/python-panel.js"></script>
 <script src="js/deck.js"></script>
 </body>
 </html>

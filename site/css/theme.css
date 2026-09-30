@@ -44,7 +44,7 @@
 
 /* The page colour lives on <html> only: a background on <body> would paint
    over the fixed .aurora layer (z-index -2) and hide it. */
-html { background: var(--bg); }
+html { background: var(--bg); overflow-x: clip; }   /* the rotating aurora must never cause sideways scrolling on a phone */
 html, body {
   margin: 0;
   color: var(--ink);
@@ -193,6 +193,11 @@ body.play.embedded header.top { display: none; }
 body.play.embedded { padding: 6px; min-height: 0; background: transparent; }
 body.play.embedded .aurora, body.play.embedded #particles { display: none; }
 html.embedded { background: transparent; }
+/* Same rules keyed on <html>, which an inline <head> script marks before the
+   first paint — otherwise the header flashes while CDN libraries download. */
+html.embedded body.play header.top { display: none; }
+html.embedded body.play { padding: 6px; min-height: 0; background: transparent; }
+html.embedded .aurora, html.embedded #particles { display: none; }
 
 .panel { padding: clamp(12px, 2vw, 22px); }
 .row   { display: flex; gap: .6rem; flex-wrap: wrap; align-items: center; }
@@ -234,4 +239,81 @@ body.play:not(.embedded) canvas.cam,
 body.play:not(.embedded) video.cam {
   width: min(100%, calc((100vh - 110px - var(--below, 20px)) * var(--ar, 1.6)));
   margin-inline: auto;
+}
+
+/* ---------- 🐍 Show me the Python (js/python-panel.js) ---------- */
+.btn.py {
+  background: linear-gradient(90deg, rgba(55,118,171,.35), rgba(255,212,59,.28));
+  border-color: #ffd43b;
+}
+.btn.py:hover { box-shadow: 0 0 22px rgba(255,212,59,.45); }
+body.play header.top .btn.py { margin-left: auto; }
+
+.pyp { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; padding: clamp(8px, 3vw, 40px); }
+.pyp[hidden] { display: none; }
+.pyp-back { position: absolute; inset: 0; background: rgba(5,3,20,.72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); opacity: 0; transition: opacity .25s; }
+.pyp-card {
+  position: relative; width: min(1180px, 100%); max-height: 100%;
+  display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; gap: .9rem;
+  padding: clamp(14px, 2.2vw, 28px); background: rgba(21,15,58,.92);
+  font-size: clamp(14px, 1.15vw, 21px); color: var(--ink); text-align: left;
+  transform: translateY(30px) scale(.96); opacity: 0;
+  transition: transform .35s cubic-bezier(.2,1.4,.4,1), opacity .25s;
+  border-color: rgba(255,212,59,.45);
+}
+.pyp.show .pyp-back { opacity: 1; }
+.pyp.show .pyp-card { transform: none; opacity: 1; }
+.pyp-head { display: flex; gap: .9rem; align-items: center; }
+.pyp-emo { font-size: 2.6em; line-height: 1; filter: drop-shadow(0 0 16px rgba(255,212,59,.45)); }
+.pyp-titles { flex: 1; min-width: 0; }
+.pyp-kicker { margin: 0; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; font-size: .72em; color: #ffd43b; }
+.pyp-head h2 { margin: .05em 0; font-size: 1.7em; line-height: 1.1; }
+.pyp-tag { margin: 0; }
+.pyp-x { align-self: flex-start; }
+
+.pyp-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .5rem; counter-reset: none; }
+.pyp-steps li {
+  display: inline-flex; align-items: center; gap: .45em; cursor: pointer;
+  padding: .35em .9em .35em .4em; border-radius: 999px; font-weight: 600;
+  background: var(--glass-2); border: 1px solid var(--stroke);
+  opacity: 0; transform: translateY(8px);
+  animation: pyp-in .4s cubic-bezier(.2,1.4,.4,1) forwards; animation-delay: calc(.15s + var(--i) * .12s);
+  transition: border-color .2s, box-shadow .2s, background .2s;
+}
+.pyp-steps li + li::before { content: "→"; margin-right: .2em; color: var(--muted); }
+.pyp-steps li .n { display: grid; place-items: center; width: 1.6em; height: 1.6em; border-radius: 50%; background: rgba(255,212,59,.2); color: #ffd43b; }
+.pyp-steps li.on { border-color: #ffd43b; background: rgba(255,212,59,.14); box-shadow: 0 0 18px rgba(255,212,59,.35); }
+
+.pyp-code { min-height: 0; overflow: auto; border-radius: var(--radius-sm); background: #0b0822; border: 1px solid var(--stroke); }
+.pyp-code pre { margin: 0; padding: 1em 0; }
+.pyp-code code { display: block; font: 500 .92em/1.55 var(--font-mono); color: #e8e4ff; counter-reset: ln; tab-size: 4; }
+.pyp-code .ln {
+  display: block; white-space: pre; padding: 0 1.2em 0 0; counter-increment: ln;
+  opacity: 0; transform: translateX(-10px);
+  animation: pyp-in .35s ease forwards; animation-delay: calc(.2s + var(--i) * .035s);
+  transition: opacity .2s, background .2s;
+}
+.pyp-code .ln::before { content: counter(ln); display: inline-block; width: 3.2em; padding-right: 1em; text-align: right; color: rgba(183,176,216,.35); user-select: none; -webkit-user-select: none; }
+.pyp-code code.focusing .ln { opacity: .28 !important; }
+.pyp-code code.focusing .ln.hl { opacity: 1 !important; background: rgba(255,212,59,.08); box-shadow: inset 3px 0 0 #ffd43b; }
+@keyframes pyp-in { to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .pyp-code .ln, .pyp-steps li { animation: none; opacity: 1; transform: none; } }
+
+/* Prism tokens, in the workshop's neon palette */
+.pyp-code .token.comment { color: #8f86c4; font-style: italic; }
+.pyp-code .token.string, .pyp-code .token.triple-quoted-string { color: var(--lime); }
+.pyp-code .token.keyword, .pyp-code .token.boolean { color: var(--pink); font-weight: 700; }
+.pyp-code .token.builtin, .pyp-code .token.function { color: var(--cyan); }
+.pyp-code .token.number { color: var(--amber); }
+.pyp-code .token.operator, .pyp-code .token.punctuation { color: #c9c3ee; }
+.pyp-code .token.decorator, .pyp-code .token.class-name { color: #ffd43b; }
+.pyp-code .token.string-interpolation .token.interpolation { color: #e8e4ff; }
+
+.pyp-foot { display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; }
+.pyp-foot .spacer { flex: 1; }
+.pyp-pip { font-family: var(--font-mono); font-size: .85em; }
+@media (max-width: 640px) {
+  .pyp { padding: 0; }
+  .pyp-card { border-radius: 0; height: 100%; }
+  .pyp-code code { font-size: .78em; }
 }

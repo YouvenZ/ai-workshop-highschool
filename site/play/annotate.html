@@ -3,11 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20100%20100%27%3E%3Ctext%20y%3D%27.9em%27%20font-size%3D%2790%27%3E%F0%9F%94%B2%3C/text%3E%3C/svg%3E">
 <title>Box Labeller · AI Lab</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=JetBrains+Mono:wght@500&family=Outfit:wght@400;600;800&display=swap">
 <link rel="stylesheet" href="../css/theme.css">
+<script>/* before first paint: embedded in the deck? (fx.js loads later, after any CDN libraries) */if(/[?&]embed=1\b/.test(location.search)||window.self!==window.top)document.documentElement.classList.add("embedded");</script>
 <style>
   :root { --ar: 1.5; }
   .lab { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 320px); gap: 14px; align-items: start; }
@@ -28,7 +30,7 @@
   h3 { font-size: 1.05rem; margin: 0; color: var(--muted); font-family: var(--font-body); font-weight: 600; }
 </style>
 </head>
-<body class="play">
+<body class="play" data-py="annotate">
 <div class="aurora"></div><canvas id="particles"></canvas>
 
 <header class="top">
@@ -63,6 +65,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 <script src="../js/fx.js"></script>
+<script src="../js/python-snippets.js"></script>
+<script src="../js/python-panel.js"></script>
 <script>
 (function () {
   "use strict";

@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20100%20100%27%3E%3Ctext%20y%3D%27.9em%27%20font-size%3D%2790%27%3E%F0%9F%98%80%3C/text%3E%3C/svg%3E">
+<title>Mood Reader · AI Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=JetBrains+Mono:wght@500&family=Outfit:wght@400;600;800&display=swap">
+<link rel="stylesheet" href="../css/theme.css">
+<script>/* before first paint: embedded in the deck? (fx.js loads later, after any CDN libraries) */if(/[?&]embed=1\b/.test(location.search)||window.self!==window.top)document.documentElement.classList.add("embedded");</script>
+<style>
+  .lab { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(280px, 1fr); gap: 14px; align-items: start; }
+  @media (max-width: 900px) { .lab { grid-template-columns: 1fr; } }
+  .side h3 { font-size: 1rem; margin: 0 0 .35rem; color: var(--muted); font-family: var(--font-body); font-weight: 600; }
+  #text { width: 100%; font: 600 clamp(1.2rem, 2.2vw, 1.8rem) var(--font-body); padding: .55em .8em; border-radius: 18px; }
+  .face { font-size: clamp(4.5rem, 11vw, 8.5rem); line-height: 1; text-align: center; transition: transform .35s cubic-bezier(.2,1.6,.4,1); filter: drop-shadow(0 0 30px var(--glow, rgba(139,92,255,.6))); }
+  .face.pop { transform: scale(1.18) rotate(-6deg); }
+  .gauge { position: relative; height: 22px; border-radius: 999px; background: linear-gradient(90deg, #ff5a6e, #ff4fd8 30%, #8b5cff 50%, #22e4ff 70%, #b6ff3b); box-shadow: 0 0 24px rgba(139,92,255,.35); }
+  .gauge i { position: absolute; top: -9px; width: 10px; height: 40px; border-radius: 6px; background: #fff; box-shadow: 0 0 18px #fff; transform: translateX(-50%); transition: left .45s cubic-bezier(.2,1.4,.4,1); }
+  .ends { display: flex; justify-content: space-between; font-size: 1.6rem; }
+  .verdict { text-align: center; font-family: var(--font-display); font-size: clamp(1.3rem, 2.4vw, 2rem); }
+  .words { display: flex; flex-wrap: wrap; gap: 8px; min-height: 2.6em; align-items: center; }
+  .w { padding: .25em .7em; border-radius: 12px; font-weight: 700; font-size: 1.15rem; border: 1px solid var(--stroke); animation: pop .35s cubic-bezier(.2,1.6,.4,1) both; position: relative; }
+  .w small { display: block; font: 500 .7rem var(--font-mono); opacity: .85; text-align: center; }
+  @keyframes pop { from { transform: scale(.4); opacity: 0; } }
+  .tries .btn { font-size: .88rem; padding: .35em .8em; }
+  .tops { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .tops ol { margin: 0; padding-left: 1.3em; display: grid; gap: 3px; font-weight: 600; }
+  .tops li span { font-family: var(--font-mono); font-size: .8em; opacity: .7; }
+  .teach .btn { flex: 1; justify-content: center; }
+  .count { font-family: var(--font-mono); color: var(--muted); font-size: .9rem; }
+</style>
+</head>
+<body class="play" data-py="sentiment">
+<div class="aurora"></div><canvas id="particles"></canvas>
+
+<header class="top">
+  <h1>😀 <span class="grad">Mood Reader</span></h1>
+  <a class="back" href="./">← all activities</a>
+</header>
+
+<main class="lab">
+  <section class="glass panel stack">
+    <input type="text" id="text" value="I love this song" autocomplete="off" spellcheck="false" aria-label="Type a sentence">
+    <div class="face" id="face">🙂</div>
+    <div class="ends"><span>😡</span><span>😐</span><span>😍</span></div>
+    <div class="gauge"><i id="needle" style="left:50%"></i></div>
+    <div class="verdict" id="verdict"></div>
+    <div>
+      <h3>How each word pushed the mood <span class="muted" style="font-weight:400">— green = happy, red = sad</span></h3>
+      <div class="words" id="words"></div>
+    </div>
+    <div class="row tries" id="tries">
+      <span class="muted">Try:</span>
+      <button class="btn">school was so boring today</button>
+      <button class="btn">my friends are awesome</button>
+      <button class="btn pink">this movie was not good</button>
+      <button class="btn pink">I don't hate it</button>
+      <button class="btn pink">oh great, another Monday</button>
+    </div>
+  </section>
+
+  <aside class="glass panel stack side">
+    <div>
+      <h3>🎓 Teach it — is the sentence above happy or sad?</h3>
+      <div class="row teach">
+        <button class="btn c1" id="pos">😀 Happy</button>
+        <button class="btn c2" id="neg">😞 Sad</button>
+      </div>
+      <p class="count" id="count"></p>
+    </div>
+    <div>
+      <h3>The words it thinks are the most…</h3>
+      <div class="tops">
+        <div><b class="lime">😀 happy</b><ol id="topPos"></ol></div>
+        <div><b class="red">😞 sad</b><ol id="topNeg"></ol></div>
+      </div>
+    </div>
+    <div class="notice" style="border-color:var(--cyan);background:rgba(34,228,255,.07)">
+      It learned from <b id="nEx">179</b> sentences that people labelled. It only <b>counts words</b> — it has no idea what order they come in. That's why <i>"not good"</i> and sarcasm fool it.
+    </div>
+  </aside>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+<script src="../js/fx.js"></script>
+<script src="../js/python-snippets.js"></script>
+<script src="../js/python-panel.js"></script>
+<script>
+(function () {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+
+  // The training set: short sentences a person labelled. Deliberately with no
+  // "not" in them, so the model has never learned what "not" does.
+  const HAPPY = `I love this song|this pizza is amazing|best day ever|I am so happy today|what a great movie|the teacher was really nice|I had so much fun at the party|this game is awesome|my friends are the best|the weather is beautiful today|I really enjoyed the concert|this book is fantastic|I feel great|we won the match|the food was delicious|I love my new phone|that was a brilliant idea|the holidays are wonderful|this class is really interesting|I am excited for the weekend|my dog is so cute|the beach was perfect|I passed my exam|thank you so much|this is the best burger in town|the show was hilarious|I adore this place|such a lovely surprise|the new update is great|I am proud of my team|the ice cream is yummy|what a beautiful sunset|my birthday was amazing|I love playing football with my friends|this app is super useful|the trip was unforgettable|I feel calm and relaxed|great job everyone|the movie made me smile|I am grateful for my family|the music is so good|this is exciting news|I love learning new things|the park is lovely in spring|my sister gave me an awesome gift|I really like this game|the cake was fantastic|we had a great time|this song makes me happy|the coach was very kind|I love summer|everything went perfectly|the snow day was fun|this video is so funny|I am really happy with my grades|the museum was fascinating|our project turned out great|I enjoy reading comics|my new shoes are awesome|it was a wonderful evening|the robot competition was so cool|the best teacher ever|I love the smell of fresh bread|I smiled all day|the concert was epic|this puzzle is fun|my cat is adorable|the service was excellent|I am thrilled|this is so cool|a perfect weekend|I really love this|lunch was tasty today|the story had a happy ending|science class was amazing today|my grandma makes the best cookies|the game was really exciting|I got a nice compliment|this is brilliant|we laughed so much|what a fun trip|the new season is great|I feel awesome after running|the view is stunning|my friends surprised me and it was so sweet|the art class was relaxing|the dance was fun|I love this team|good vibes only|that was fun`.split("|");
+  const SAD = `I hate this song|this pizza is disgusting|worst day ever|I am so sad today|what a terrible movie|the teacher was really mean|the party was boring|this game is awful|my friends ignored me|the weather is horrible today|I really hated the concert|this book is so boring|I feel terrible|we lost the match|the food was gross|my phone is broken again|that was a stupid idea|the homework is too hard|this class is really boring|I am worried about the test|my dog is sick|the beach was dirty|I failed my exam|this is so annoying|this is the worst burger in town|the show was painful to watch|I hate this place|such an ugly surprise|the new update is terrible|I am angry at my team|the ice cream was melted and gross|the bus was late again|my birthday was a disaster|I hate losing|this app keeps crashing|the trip was exhausting|I feel stressed and tired|bad job everyone|the movie made me cry|I am lonely|the music is so bad|this is sad news|I hate waking up early|the park is dirty and noisy|my sister broke my headphones|I really dislike this game|the cake was dry and awful|we had a horrible time|this song makes me sad|the coach was very rude|I hate the cold|everything went wrong|the snow day was boring|this video is so stupid|I am really upset about my grades|the museum was dull|our project was a mess|I hate reading|my new shoes hurt|it was a miserable evening|the wifi is so slow|the worst teacher ever|I hate the smell of this room|I cried all day|the concert was a total waste of money|this puzzle is frustrating|my cat scratched me|the service was terrible|I am furious|this is so lame|a ruined weekend|I really hate this|lunch was disgusting today|the story had a sad ending|math class was awful today|the cookies were burnt|the game was really boring|someone was rude to me|this is useless|we argued all day|what a boring trip|the new season is disappointing|I feel awful after running|the view is ugly|I feel so frustrated|the queue was long and annoying|the traffic is horrible|I am scared|that was painful`.split("|");
+
+  let data = [...HAPPY.map((t) => [t, 1]), ...SAD.map((t) => [t, 0])];
+  let M = null;
+
+  const tokens = (t) => (t.toLowerCase().replace(/n't\b/g, " not").match(/[a-z']+/g) || []).map((w) => w.replace(/'s$/, ""));
+
+  // Naive Bayes: for each word, how much more often does it appear in happy
+  // sentences than in sad ones? (+1 smoothing so a new word is neutral.)
+  function train() {
+    const cnt = [new Map(), new Map()], tot = [0, 0], docs = [0, 0];
+    for (const [t, y] of data) { docs[y]++; for (const w of tokens(t)) { cnt[y].set(w, (cnt[y].get(w) || 0) + 1); tot[y]++; } }
+    const vocab = new Set([...cnt[0].keys(), ...cnt[1].keys()]), V = vocab.size;
+    const weight = new Map();
+    for (const w of vocab) weight.set(w, Math.log(((cnt[1].get(w) || 0) + 1) / (tot[1] + V)) - Math.log(((cnt[0].get(w) || 0) + 1) / (tot[0] + V)));
+    M = { weight, prior: Math.log(docs[1] / docs[0]), cnt };
+    $("nEx").textContent = data.length;
+    $("count").textContent = `${data.length} labelled sentences · ${V} different words`;
+    const seen = [...vocab].filter((w) => (cnt[0].get(w) || 0) + (cnt[1].get(w) || 0) >= 2);
+    const sorted = seen.sort((a, b) => weight.get(b) - weight.get(a));
+    $("topPos").innerHTML = sorted.slice(0, 7).map((w) => `<li>${w} <span>+${weight.get(w).toFixed(1)}</span></li>`).join("");
+    $("topNeg").innerHTML = sorted.slice(-7).reverse().map((w) => `<li>${w} <span>${weight.get(w).toFixed(1)}</span></li>`).join("");
+  }
+
+  const FACES = [[0.1, "😡"], [0.25, "😞"], [0.42, "🙁"], [0.58, "😐"], [0.75, "🙂"], [0.9, "😀"], [1.01, "😍"]];
+  let lastFace = "";
+  function analyse() {
+    const text = $("text").value, ws = tokens(text);
+    const box = $("words"); box.innerHTML = "";
+    let z = M.prior;
+    for (const w of ws) {
+      const v = M.weight.has(w) ? M.weight.get(w) : 0; z += v;
+      const el = document.createElement("span"); el.className = "w";
+      const a = Math.min(1, Math.abs(v) / 2.2);
+      el.style.background = v > 0.05 ? `rgba(182,255,59,${0.12 + a * 0.5})` : v < -0.05 ? `rgba(255,90,110,${0.12 + a * 0.55})` : "rgba(255,255,255,.06)";
+      el.style.borderColor = v > 0.05 ? "rgba(182,255,59,.7)" : v < -0.05 ? "rgba(255,90,110,.7)" : "var(--stroke)";
+      el.innerHTML = `${w}<small>${M.weight.has(w) ? (v > 0 ? "+" : "") + v.toFixed(1) : "never seen"}</small>`;
+      box.appendChild(el);
+    }
+    const p = ws.length ? 1 / (1 + Math.exp(-z)) : 0.5;
+    $("needle").style.left = (4 + p * 92) + "%";
+    const face = ws.length ? FACES.find(([t]) => p < t)[1] : "🤔";
+    const f = $("face");
+    if (face !== lastFace) { f.textContent = face; f.classList.add("pop"); setTimeout(() => f.classList.remove("pop"), 250); lastFace = face; }
+    f.style.setProperty("--glow", p > 0.5 ? "rgba(182,255,59,.55)" : "rgba(255,79,216,.55)");
+    $("verdict").innerHTML = !ws.length ? '<span class="muted">Type a sentence…</span>'
+      : p > 0.5 ? `<span class="lime">${Math.round(p * 100)}% happy</span>` : `<span class="red">${Math.round((1 - p) * 100)}% sad</span>`;
+  }
+
+  function teach(y) {
+    const t = $("text").value.trim();
+    if (!tokens(t).length) return FX.toast("Type a sentence first ✍️");
+    data.push([t, y]); train(); analyse();
+    FX.confetti({ particleCount: 50, origin: { y: 0.4 } });
+    FX.toast(`Learned: "${t}" = ${y ? "😀 happy" : "😞 sad"}. It changed its word scores!`, 3000);
+  }
+
+  $("text").addEventListener("input", analyse);
+  $("pos").addEventListener("click", () => teach(1));
+  $("neg").addEventListener("click", () => teach(0));
+  $("tries").addEventListener("click", (e) => {
+    const b = e.target.closest(".btn"); if (!b) return;
+    $("text").value = b.textContent; analyse();
+    if (b.classList.contains("pink")) FX.toast("🤔 Did it get that right? Why not?", 2600);
+  });
+
+  train(); analyse();
+})();
+</script>
+</body>
+</html>

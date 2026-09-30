@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20100%20100%27%3E%3Ctext%20y%3D%27.9em%27%20font-size%3D%2790%27%3E%F0%9F%A7%A0%3C/text%3E%3C/svg%3E">
+<title>Build a Brain · AI Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=JetBrains+Mono:wght@500&family=Outfit:wght@400;600;800&display=swap">
+<link rel="stylesheet" href="../css/theme.css">
+<script>/* before first paint: embedded in the deck? (fx.js loads later, after any CDN libraries) */if(/[?&]embed=1\b/.test(location.search)||window.self!==window.top)document.documentElement.classList.add("embedded");</script>
+<style>
+  .lab { display: grid; grid-template-columns: minmax(250px, 20em) minmax(0, 1fr) minmax(230px, 17em); gap: 12px; align-items: stretch; }
+  html.embedded { font-size: clamp(12px, .82vw, 17px); }
+  @media (max-width: 980px) { .lab { grid-template-columns: 1fr; } }
+  .col { display: grid; gap: 10px; align-content: start; min-width: 0; }
+  .side h3 { font-size: 1rem; margin: 0 0 .35rem; color: var(--muted); font-family: var(--font-body); font-weight: 600; }
+  .layers { display: grid; gap: 6px; }
+  .layer { display: grid; grid-template-columns: 5.2em 1fr 2.6em 1.9em; align-items: center; gap: 6px; font-weight: 600; }
+  .layer .nn { font-family: var(--font-mono); text-align: right; }
+  .layer .x { padding: .15em .4em; font-size: .85em; }
+  .layer.fixed { color: var(--muted); font-weight: 500; grid-template-columns: 5.2em 1fr; }
+  .conn { font-family: var(--font-display); font-size: 1.15rem; }
+  .conn b { color: var(--amber); }
+  .presets .btn { font-size: .82rem; padding: .3em .7em; }
+  #train { width: 100%; justify-content: center; font-size: 1.15rem; }
+  .netwrap { position: relative; min-height: 340px; display: grid; align-self: start; height: min(calc(100vh - 110px), 820px); }
+  @media (max-width: 980px) { .netwrap { height: 70vh; } }
+  #net { width: 100%; height: 100%; min-height: 340px; display: block; }
+  .net-cap { position: absolute; left: 14px; top: 10px; font-weight: 700; color: var(--muted); pointer-events: none; }
+  .net-cap b { color: var(--ink); }
+  #chart { width: 100%; height: 120px; display: block; border-radius: var(--radius-sm); background: rgba(0,0,0,.3); border: 1px solid var(--stroke); }
+  .score { font-family: var(--font-display); font-size: 2rem; line-height: 1; }
+  #pad { width: 100%; max-width: 280px; aspect-ratio: 1; margin: 0 auto; background: #000; border-radius: var(--radius-sm); border: 2px solid var(--stroke); touch-action: none; cursor: crosshair; display: block; }
+  #pad.hot { border-color: var(--cyan); box-shadow: var(--glow-cyan); }
+  .guess { display: flex; align-items: center; gap: .6rem; justify-content: center; }
+  .guess .big { font-family: var(--font-display); font-size: 3.2rem; line-height: 1; min-width: 1ch; text-align: center; color: var(--lime); text-shadow: 0 0 24px rgba(182,255,59,.6); }
+  .probs { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; align-items: end; height: 84px; }
+  .probs .p { display: grid; grid-template-rows: 1fr auto; height: 100%; text-align: center; font-family: var(--font-mono); font-size: .8rem; }
+  .probs .p i { align-self: end; display: block; height: 0; border-radius: 6px 6px 2px 2px; background: linear-gradient(0deg, #6b3fe0, var(--cyan)); transition: height .2s ease; }
+  .probs .p.top i { background: linear-gradient(0deg, #5f9f10, var(--lime)); box-shadow: 0 0 14px rgba(182,255,59,.6); }
+  .probs .p.top { color: var(--lime); font-weight: 700; }
+  .wrong { display: grid; grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: 6px; }
+  .wrong button { all: unset; cursor: pointer; display: grid; gap: 2px; justify-items: center; font-family: var(--font-mono); font-size: .75rem; }
+  .wrong canvas { width: 100%; image-rendering: pixelated; border-radius: 8px; border: 1px solid rgba(255,90,110,.5); background: #000; }
+  .wrong button:hover canvas { box-shadow: 0 0 12px rgba(255,90,110,.7); }
+  .runs { width: 100%; border-collapse: collapse; font-size: .85rem; }
+  .runs td { padding: 2px 4px; border-top: 1px solid var(--stroke); }
+  .runs td:last-child { text-align: right; font-family: var(--font-mono); }
+  .runs tr.best td { color: var(--lime); font-weight: 700; }
+  .loading { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; background: rgba(10,7,32,.55); border-radius: var(--radius); font-weight: 600; }
+  body.play.embedded .netwrap { height: calc(100vh - 14px); }
+  body.play.embedded #pad { max-width: min(100%, 34vh); }
+  body.play.embedded #chart { height: 16vh; }
+  body.play.embedded .probs { height: 9vh; }
+  body.play.embedded .netwrap, body.play.embedded #net { min-height: 280px; }
+</style>
+</head>
+<body class="play" data-py="digits">
+<div class="aurora"></div><canvas id="particles"></canvas>
+
+<header class="top">
+  <h1>🧠 <span class="grad">Build a Brain</span></h1>
+  <a class="back" href="./">← all activities</a>
+</header>
+
+<main class="lab">
+  <!-- 1 · design -->
+  <section class="col">
+    <div class="glass panel side stack">
+      <div>
+        <h3>1 · Design your brain</h3>
+        <div class="layers" id="layers"></div>
+        <div class="row" style="margin-top:6px">
+          <button class="btn cyan" id="add">➕ Add a layer</button>
+          <select id="act" aria-label="activation">
+            <option value="relu">⚡ ReLU</option>
+            <option value="sigmoid">〰️ Sigmoid</option>
+            <option value="tanh">🌊 Tanh</option>
+          </select>
+        </div>
+      </div>
+      <div class="row presets" aria-label="presets">
+        <span class="muted" style="font-size:.85rem">Try:</span>
+        <button class="btn" data-preset="">no layers</button>
+        <button class="btn" data-preset="16">1 × 16</button>
+        <button class="btn" data-preset="64,32">64 → 32</button>
+        <button class="btn" data-preset="128,128,64">big brain</button>
+      </div>
+      <div class="conn" id="conn"></div>
+      <div>
+        <h3>Epochs: <b id="epv">3</b> <span class="muted" style="font-weight:400">(how many times it studies all 10,000 digits)</span></h3>
+        <input type="range" id="epochs" min="1" max="8" value="3">
+      </div>
+      <button class="btn primary" id="train" disabled><span class="spinner"></span> Loading digits…</button>
+    </div>
+    <div class="glass panel side stack">
+      <h3>2 · Watch it learn</h3>
+      <canvas id="chart" width="560" height="220"></canvas>
+      <div class="row"><span class="score" id="score">—</span><span class="muted" id="scoreTxt">test score on 1,000 digits it never saw</span></div>
+    </div>
+  </section>
+
+  <!-- the network -->
+  <section class="glass netwrap">
+    <canvas id="net" aria-label="Your neural network"></canvas>
+    <div class="net-cap" id="cap">pixels → <b>hidden layers</b> → answer</div>
+    <div class="loading" id="loading"><div><span class="spinner"></span><br>Loading 11,000 handwritten digits…</div></div>
+  </section>
+
+  <!-- 3 · test -->
+  <section class="col">
+    <div class="glass panel side stack">
+      <h3>3 · Draw a digit (0–9)</h3>
+      <canvas id="pad" width="280" height="280" aria-label="Draw a digit here"></canvas>
+      <div class="row" style="justify-content:center">
+        <button class="btn" id="clear">🧹 Clear</button>
+        <button class="btn" id="sample">🎲 Real digit</button>
+      </div>
+      <div class="guess"><span class="muted">I think it's a</span><span class="big" id="guess">?</span><span class="muted" id="conf"></span></div>
+      <div class="probs" id="probs"></div>
+    </div>
+    <div class="glass panel side stack">
+      <h3>😬 Digits it got wrong <span class="muted" style="font-weight:400">(tap one)</span></h3>
+      <div class="wrong" id="wrong"><span class="muted" style="font-size:.9rem">Train first — then see which digits fooled it.</span></div>
+      <table class="runs" id="runs" hidden><tbody></tbody></table>
+    </div>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+<script src="../js/fx.js"></script>
+<script src="../js/python-snippets.js"></script>
+<script src="../js/python-panel.js"></script>
+<script>
+(function () {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const COL = ["#22e4ff", "#8b5cff", "#ff4fd8", "#ffc53d", "#b6ff3b"];
+  const SHOW = 12;                          // neurons drawn per hidden layer
+
+  let hidden = [64, 32];                    // neurons per hidden layer
+  let activation = "relu";
+  let data = null;                          // { x: Float32Array, y: Uint8Array, nTrain, nTest }
+  let model = null, probe = null, trained = false, training = false;
+  let weights = [];                         // sampled weights for drawing
+  let acts = null, probs = null, input = null; // latest prediction
+  let history = [], runs = [];
+
+  // ---------------------------------------------------------------- data --
+  async function loadData() {
+    const meta = await (await fetch("../data/mnist_meta.json")).json();
+    const [img, lab] = await Promise.all([FX.loadImage("../data/mnist_images.png"), fetch("../data/mnist_labels.bin").then((r) => r.arrayBuffer())]);
+    const c = document.createElement("canvas"); c.width = img.width; c.height = img.height;
+    const g = c.getContext("2d", { willReadFrequently: true }); g.drawImage(img, 0, 0);
+    const px = g.getImageData(0, 0, img.width, img.height).data;
+    const n = img.height, x = new Float32Array(n * 784);
+    for (let i = 0; i < n * 784; i++) x[i] = px[i * 4] / 255;
+    return { x, y: new Uint8Array(lab), nTrain: meta.train, nTest: meta.test };
+  }
+  const sampleOf = (i) => data.x.subarray(i * 784, (i + 1) * 784);
+
+  // --------------------------------------------------------------- model --
+  function paramCount() {
+    const sizes = [784, ...hidden, 10];
+    let n = 0; for (let i = 1; i < sizes.length; i++) n += sizes[i - 1] * sizes[i] + sizes[i];
+    return n;
+  }
+  function buildModel() {
+    if (model) model.dispose();
+    model = tf.sequential();
+    hidden.forEach((u, i) => model.add(tf.layers.dense(Object.assign({ units: u, activation }, i === 0 ? { inputShape: [784] } : {}))));
+    model.add(tf.layers.dense(Object.assign({ units: 10, activation: "softmax" }, hidden.length ? {} : { inputShape: [784] })));
+    model.compile({ optimizer: tf.train.adam(activation === "relu" ? 0.002 : 0.004), loss: "sparseCategoricalCrossentropy", metrics: ["accuracy"] });
+    probe = tf.model({ inputs: model.inputs, outputs: model.layers.map((l) => l.output) });
+    trained = false; acts = null; probs = null;
+    readWeights();
+  }
+  // Which real neurons stand for the SHOW dots we draw (evenly spread).
+  const shown = (n) => n <= SHOW ? [...Array(n).keys()] : [...Array(SHOW).keys()].map((i) => Math.round(i * (n - 1) / (SHOW - 1)));
+  function readWeights() {
+    const sizes = [784, ...hidden, 10];
+    weights = model.layers.map((layer, li) => {
+      if (li === 0) return null;                         // input → first layer: drawn from the picture
+      const k = layer.getWeights()[0].arraySync();
+      const from = shown(sizes[li]), to = li === sizes.length - 2 ? [...Array(10).keys()] : shown(sizes[li + 1]);
+      const w = from.map((a) => to.map((b) => k[a][b]));
+      const m = Math.max(1e-6, ...w.flat().map(Math.abs));
+      return w.map((r) => r.map((v) => v / m));
+    });
+  }
+
+  // ------------------------------------------------------------ controls --
+  function renderLayers() {
+    const box = $("layers");
+    box.innerHTML = '<div class="layer fixed"><span>📷 Input</span><span>784 pixels (28 × 28)</span></div>';
+    hidden.forEach((u, i) => {
+      const d = document.createElement("div"); d.className = "layer";
+      d.innerHTML = `<span style="color:${COL[1 + (i % 3)]}">Layer ${i + 1}</span><input type="range" min="4" max="128" step="4" value="${u}" aria-label="neurons in layer ${i + 1}"><span class="nn">${u}</span><button class="btn x" title="Remove layer">✕</button>`;
+      const r = d.querySelector("input"), nn = d.querySelector(".nn");
+      r.addEventListener("input", () => { nn.textContent = r.value; hidden[i] = +r.value; changed(false); });
+      r.addEventListener("change", () => changed(true));
+      d.querySelector(".x").addEventListener("click", () => { hidden.splice(i, 1); changed(true); renderLayers(); });
+      box.appendChild(d);
+    });
+    box.insertAdjacentHTML("beforeend", '<div class="layer fixed"><span style="color:var(--lime)">🎯 Output</span><span>10 neurons: 0 1 2 … 9</span></div>');
+    $("add").disabled = hidden.length >= 3 || training;
+    box.querySelectorAll("input, button").forEach((el) => (el.disabled = training));
+  }
+  function changed(rebuild) {
+    $("conn").innerHTML = `🔗 <b>${paramCount().toLocaleString()}</b> numbers to learn`;
+    $("cap").innerHTML = `pixels → <b>${hidden.length ? hidden.length + " hidden layer" + (hidden.length > 1 ? "s" : "") : "no hidden layers"}</b> → answer`;
+    layoutNet();
+    if (rebuild && data) { buildModel(); resetResults(); }
+  }
+  function resetResults() {
+    $("score").textContent = "—"; history = []; drawChart();
+    $("wrong").innerHTML = '<span class="muted" style="font-size:.9rem">Train first — then see which digits fooled it.</span>';
+    setTrainBtn();
+    predictPad();
+  }
+  function setTrainBtn() {
+    const b = $("train");
+    if (training) { b.innerHTML = "⏹ Stop"; b.disabled = false; return; }
+    b.disabled = !data;
+    b.innerHTML = trained ? "🔁 Train again" : "🏋️ Train the brain!";
+  }
+  $("add").addEventListener("click", () => { if (hidden.length < 3) { hidden.push(32); renderLayers(); changed(true); } });
+  $("act").addEventListener("change", (e) => { activation = e.target.value; changed(true); });
+  $("epochs").addEventListener("input", (e) => ($("epv").textContent = e.target.value));
+  document.querySelectorAll("[data-preset]").forEach((b) => b.addEventListener("click", () => {
+    if (training) return;
+    hidden = b.dataset.preset ? b.dataset.preset.split(",").map(Number) : [];
+    renderLayers(); changed(true);
+  }));
+
+  // ------------------------------------------------------------ training --
+  $("train").addEventListener("click", async () => {
+    if (training) { model.stopTraining = true; return; }
+    if (!data) return;
+    buildModel();                                  // fresh brain every run: a fair race
+    training = true; setTrainBtn(); renderLayers(); history = [];
+    const epochs = +$("epochs").value, n = data.nTrain, batch = 64;
+    const perEpoch = Math.ceil(n / batch), total = epochs * perEpoch;
+    const xs = tf.tensor2d(data.x.subarray(0, n * 784), [n, 784]);
+    const ys = tf.tensor1d(Array.from(data.y.subarray(0, n)), "float32");
+    const xt = tf.tensor2d(data.x.subarray(n * 784), [data.nTest, 784]);
+    const yt = Array.from(data.y.subarray(n));
+    const t0 = performance.now();
+    let step = 0, ema = null, emaL = null, testAcc = 0;
+    try {
+      await model.fit(xs, ys, {
+        epochs, batchSize: batch, shuffle: true, yieldEvery: "never",
+        callbacks: {
+          onBatchEnd: async (_, logs) => {
+            step++;
+            ema = ema == null ? logs.acc : ema * 0.9 + logs.acc * 0.1;
+            emaL = emaL == null ? logs.loss : emaL * 0.9 + logs.loss * 0.1;
+            history.push({ s: step / total, acc: ema, loss: emaL });
+            if (step % 6 === 0) { readWeights(); spark(3); drawChart(); predictPad(); await tf.nextFrame(); }
+          },
+          onEpochEnd: async (ep) => {
+            testAcc = evaluate(xt, yt).acc;
+            history.push({ s: step / total, test: testAcc, ep: ep + 1 });
+            $("score").textContent = Math.round(testAcc * 100) + "%";
+            drawChart(); await tf.nextFrame();
+          },
+        },
+      });
+    } catch (err) {
+      console.error(err);
+      FX.toast("Training hit a problem: " + err.message, 4000);
+    }
+    const res = evaluate(xt, yt);
+    xs.dispose(); ys.dispose(); xt.dispose();
+    training = false; trained = true; readWeights(); setTrainBtn(); renderLayers();
+    showWrong(res.wrong);
+    const secs = (performance.now() - t0) / 1000;
+    runs.push({ arch: archName(), acc: res.acc, secs, params: paramCount() });
+    showRuns();
+    $("score").textContent = Math.round(res.acc * 100) + "%";
+    if (res.acc >= Math.max(...runs.map((r) => r.acc)) && res.acc > 0.9) FX.fireworks(1200);
+    FX.toast(`${Math.round(res.acc * 100)}% right on digits it never saw — trained in ${secs.toFixed(1)} s. Now draw one!`, 4200);
+    predictPad();
+  });
+
+  function evaluate(xt, yt) {
+    const pred = tf.tidy(() => model.predict(xt).argMax(1).dataSync());
+    const wrong = []; let ok = 0;
+    for (let i = 0; i < yt.length; i++) { if (pred[i] === yt[i]) ok++; else wrong.push({ i: data.nTrain + i, t: yt[i], p: pred[i] }); }
+    return { acc: ok / yt.length, wrong };
+  }
+  const archName = () => (hidden.length ? hidden.join(" → ") : "no layers") + (activation !== "relu" ? " · " + activation : "");
+
+  function showWrong(list) {
+    const box = $("wrong"); box.innerHTML = "";
+    if (!list.length) { box.innerHTML = '<span class="lime">It got every single one right! 🤯</span>'; return; }
+    FX.shuffle(list).slice(0, 10).forEach((w) => {
+      const b = document.createElement("button");
+      const c = document.createElement("canvas"); c.width = 28; c.height = 28;
+      const g = c.getContext("2d"), im = g.createImageData(28, 28), s = sampleOf(w.i);
+      for (let k = 0; k < 784; k++) { const v = s[k] * 255; im.data[k * 4] = v; im.data[k * 4 + 1] = v; im.data[k * 4 + 2] = v; im.data[k * 4 + 3] = 255; }
+      g.putImageData(im, 0, 0);
+      b.appendChild(c);
+      b.insertAdjacentHTML("beforeend", `<span><span class="lime">${w.t}</span>→<span class="red">${w.p}</span></span>`);
+      b.title = `Really a ${w.t}, the brain said ${w.p}`;
+      b.addEventListener("click", () => loadSample(w.i));
+      box.appendChild(b);
+    });
+  }
+  function showRuns() {
+    const t = $("runs"); t.hidden = false;
+    const best = Math.max(...runs.map((r) => r.acc));
+    t.tBodies[0].innerHTML = '<tr><td colspan="2" class="muted" style="border:0">🏆 Your experiments</td></tr>' +
+      runs.slice(-6).map((r) => `<tr class="${r.acc === best ? "best" : ""}"><td>${r.arch}</td><td>${(r.acc * 100).toFixed(1)}%</td></tr>`).join("");
+  }
+
+  // --------------------------------------------------------------- chart --
+  function drawChart() {
+    const c = $("chart"), g = c.getContext("2d"), W = c.width, H = c.height, P = 14;
+    g.clearRect(0, 0, W, H);
+    g.strokeStyle = "rgba(255,255,255,.07)"; g.lineWidth = 1;
+    for (let k = 0; k <= 4; k++) { const y = P + (H - 2 * P) * k / 4; g.beginPath(); g.moveTo(P, y); g.lineTo(W - P, y); g.stroke(); }
+    g.font = "600 18px Outfit, sans-serif"; g.textBaseline = "top";
+    if (!history.length) { g.fillStyle = "rgba(183,176,216,.7)"; g.textAlign = "center"; g.fillText("Press Train — the lines will show it learning", W / 2, H / 2 - 9); return; }
+    const X = (s) => P + (W - 2 * P) * s, Y = (v) => H - P - (H - 2 * P) * v;
+    const line = (key, col, scale) => {
+      g.strokeStyle = col; g.lineWidth = 3; g.shadowColor = col; g.shadowBlur = 8; g.beginPath();
+      let first = true;
+      for (const h of history) if (h[key] != null) { const y = Y(Math.min(1, h[key] * scale)); if (first) { g.moveTo(X(h.s), y); first = false; } else g.lineTo(X(h.s), y); }
+      g.stroke(); g.shadowBlur = 0;
+    };
+    line("loss", "#ff4fd8", 1 / 2.5);
+    line("acc", "#b6ff3b", 1);
+    for (const h of history) if (h.test != null) {
+      g.fillStyle = "#22e4ff"; g.beginPath(); g.arc(X(h.s), Y(h.test), 6, 0, 7); g.fill();
+      g.textAlign = h.s > 0.8 ? "right" : "center"; g.fillText(Math.round(h.test * 100) + "%", X(h.s), Math.max(0, Y(h.test) - 26));
+    }
+    g.textAlign = "left"; g.fillStyle = "#b6ff3b"; g.fillText("● right answers", P + 4, H - P - 22);
+    g.fillStyle = "#ff4fd8"; g.fillText("● mistakes (loss)", P + 170, H - P - 22);
+  }
+
+  // ------------------------------------------------------------ draw pad --
+  const pad = $("pad"), pg = pad.getContext("2d", { willReadFrequently: true });
+  function clearPad() { pg.fillStyle = "#000"; pg.fillRect(0, 0, 280, 280); input = null; acts = null; probs = null; updateBars(); }
+  let drawing = false, last = null, rafPending = false;
+  pad.addEventListener("pointerdown", (e) => { e.stopPropagation(); e.preventDefault(); pad.setPointerCapture(e.pointerId); drawing = true; last = FX.canvasPoint(pad, e); dot(last, last); pad.classList.add("hot"); });
+  pad.addEventListener("pointermove", (e) => { if (!drawing) return; const p = FX.canvasPoint(pad, e); dot(last, p); last = p; });
+  const up = () => { if (!drawing) return; drawing = false; pad.classList.remove("hot"); predictPad(); };
+  pad.addEventListener("pointerup", up); pad.addEventListener("pointercancel", up);
+  function dot(a, b) {
+    pg.strokeStyle = "#fff"; pg.lineWidth = 22; pg.lineCap = "round"; pg.lineJoin = "round";
+    pg.beginPath(); pg.moveTo(a.x, a.y); pg.lineTo(b.x, b.y); pg.stroke();
+    if (!rafPending) { rafPending = true; requestAnimationFrame(() => { rafPending = false; predictPad(); }); }
+  }
+  $("clear").addEventListener("click", clearPad);
+  $("sample").addEventListener("click", () => data && loadSample(data.nTrain + Math.floor(Math.random() * data.nTest)));
+  function loadSample(i) {
+    const s = sampleOf(i), c = document.createElement("canvas"); c.width = c.height = 28;
+    const g = c.getContext("2d"), im = g.createImageData(28, 28);
+    for (let k = 0; k < 784; k++) { const v = s[k] * 255; im.data[k * 4] = im.data[k * 4 + 1] = im.data[k * 4 + 2] = v; im.data[k * 4 + 3] = 255; }
+    g.putImageData(im, 0, 0);
+    pg.imageSmoothingEnabled = true; pg.drawImage(c, 0, 0, 280, 280);
+    predictPad(new Float32Array(s));
+  }
+
+  // The drawing → a 28×28 MNIST-style picture: crop to the ink, scale the
+  // longest side to 20 px, then centre by the centre of mass — exactly how
+  // the MNIST digits were prepared, which is why the brain recognises it.
+  function padToVector() {
+    const d = pg.getImageData(0, 0, 280, 280).data;
+    let x0 = 280, y0 = 280, x1 = -1, y1 = -1;
+    for (let y = 0; y < 280; y++) for (let x = 0; x < 280; x++) if (d[(y * 280 + x) * 4] > 30) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    if (x1 < 0) return null;
+    const w = x1 - x0 + 1, h = y1 - y0 + 1, s = 20 / Math.max(w, h);
+    const tmp = document.createElement("canvas"); tmp.width = tmp.height = 28;
+    const tg = tmp.getContext("2d", { willReadFrequently: true });
+    tg.fillStyle = "#000"; tg.fillRect(0, 0, 28, 28); tg.imageSmoothingEnabled = true;
+    const dw = w * s, dh = h * s;
+    tg.drawImage(pad, x0, y0, w, h, (28 - dw) / 2, (28 - dh) / 2, dw, dh);
+    let m = 0, cx = 0, cy = 0; const px = tg.getImageData(0, 0, 28, 28).data;
+    for (let k = 0; k < 784; k++) { const v = px[k * 4]; m += v; cx += v * (k % 28); cy += v * Math.floor(k / 28); }
+    const dx = Math.round(13.5 - cx / m), dy = Math.round(13.5 - cy / m);
+    tg.fillRect(0, 0, 28, 28);
+    tg.drawImage(pad, x0, y0, w, h, (28 - dw) / 2 + dx, (28 - dh) / 2 + dy, dw, dh);
+    const out = tg.getImageData(0, 0, 28, 28).data, v = new Float32Array(784);
+    for (let k = 0; k < 784; k++) v[k] = out[k * 4] / 255;
+    return v;
+  }
+
+  function predictPad(vec) {
+    input = vec || padToVector();
+    if (!input || !probe) { acts = null; probs = null; updateBars(); return; }
+    const outs = tf.tidy(() => probe.predict(tf.tensor2d(input, [1, 784])));
+    const list = Array.isArray(outs) ? outs : [outs];
+    const vals = list.map((t) => Array.from(t.dataSync()));
+    list.forEach((t) => t.dispose());
+    probs = vals[vals.length - 1];
+    acts = vals.slice(0, -1);
+    updateBars(); spark(6);
+  }
+  function updateBars() {
+    const box = $("probs");
+    if (!box.children.length) for (let d = 0; d < 10; d++) box.insertAdjacentHTML("beforeend", `<div class="p"><i></i><span>${d}</span></div>`);
+    const top = probs ? probs.indexOf(Math.max(...probs)) : -1;
+    [...box.children].forEach((el, d) => { el.querySelector("i").style.height = (probs ? Math.max(2, probs[d] * 100) : 0) + "%"; el.classList.toggle("top", d === top); });
+    $("guess").textContent = top >= 0 ? top : "?";
+    $("conf").textContent = top >= 0 ? (trained ? Math.round(probs[top] * 100) + "% sure" : "(untrained: a wild guess!)") : "";
+  }
+
+  // --------------------------------------------------------- the network --
+  const net = $("net"), ng = net.getContext("2d");
+  let W = 0, H = 0, nodes = new Map(), cols = [], sparks = [], thumbBox = null;
+  const thumb = document.createElement("canvas"); thumb.width = thumb.height = 28;
+  function resize() {
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    W = net.clientWidth; H = net.clientHeight;
+    net.width = W * dpr; net.height = H * dpr; ng.setTransform(dpr, 0, 0, dpr, 0, 0);
+    layoutNet();
+  }
+  function layoutNet() {
+    if (!W) return;
+    const sizes = [...hidden, 10], L = sizes.length;
+    const size = Math.min(H * 0.34, W * 0.17);
+    thumbBox = { x: W * 0.05, y: H / 2 - size / 2, s: size };
+    cols = sizes.map((n, li) => {
+      const idx = li === L - 1 ? [...Array(10).keys()] : shown(n);
+      const m = idx.length, top = H * 0.12, bot = H * 0.88;
+      const x = li === L - 1 ? W * 0.86 : W * 0.05 + size + (W * 0.81 - size) * ((li + 1) / L);
+      return idx.map((neuron, j) => {
+        const key = li === L - 1 ? "out-" + j : `${li}-${j}`;
+        let nd = nodes.get(key);
+        if (!nd) { nd = { x: W * 0.05 + size, y: H / 2, r: 0, glow: 0 }; nodes.set(key, nd); }
+        nd.tx = x; nd.ty = top + (bot - top) * (m === 1 ? 0.5 : j / (m - 1)); nd.neuron = neuron; nd.li = li; nd.j = j; nd.alive = true; nd.key = key;
+        return nd;
+      });
+    });
+    const keep = new Set(cols.flat().map((n) => n.key));
+    for (const [k, n] of nodes) if (!keep.has(k)) nodes.delete(k);
+  }
+  function spark(n) {
+    if (cols.length < 1 || sparks.length > 160) return;
+    for (let k = 0; k < n; k++) {
+      const first = cols[0], a = { x: thumbBox.x + thumbBox.s, y: thumbBox.y + Math.random() * thumbBox.s };
+      sparks.push({ a, b: first[Math.floor(Math.random() * first.length)], l: 0, t: 0 });
+    }
+  }
+  function nodeLevel(nd) {
+    if (nd.li === cols.length - 1) return probs ? probs[nd.j] : 0;
+    if (!acts || !acts[nd.li]) return 0;
+    const layer = acts[nd.li], idx = cols[nd.li].map((c) => c.neuron);
+    const m = Math.max(1e-6, ...idx.map((i) => Math.abs(layer[i])));
+    return Math.abs(layer[nd.neuron]) / m;
+  }
+  function frame() {
+    requestAnimationFrame(frame);
+    if (!W || document.hidden) return;
+    ng.clearRect(0, 0, W, H);
+    for (const n of nodes.values()) { n.x += (n.tx - n.x) * 0.14; n.y += (n.ty - n.y) * 0.14; n.r += (1 - n.r) * 0.12; }
+    // input picture
+    if (thumbBox) {
+      const g = thumb.getContext("2d"), im = g.createImageData(28, 28);
+      for (let k = 0; k < 784; k++) { const v = input ? input[k] : 0; im.data[k * 4] = 34 * v + 10 * (1 - v); im.data[k * 4 + 1] = 228 * v + 7 * (1 - v); im.data[k * 4 + 2] = 255 * v + 32 * (1 - v); im.data[k * 4 + 3] = 255; }
+      g.putImageData(im, 0, 0);
+      ng.imageSmoothingEnabled = false;
+      ng.drawImage(thumb, thumbBox.x, thumbBox.y, thumbBox.s, thumbBox.s);
+      ng.strokeStyle = COL[0]; ng.lineWidth = 2; ng.shadowColor = COL[0]; ng.shadowBlur = 16;
+      ng.strokeRect(thumbBox.x, thumbBox.y, thumbBox.s, thumbBox.s); ng.shadowBlur = 0;
+      ng.fillStyle = "rgba(183,176,216,.9)"; ng.font = "600 14px Outfit, sans-serif"; ng.textAlign = "center";
+      ng.fillText("784 pixels", thumbBox.x + thumbBox.s / 2, thumbBox.y + thumbBox.s + 18);
+      ng.lineWidth = 1;
+      for (const nd of cols[0] || []) for (let k = 0; k < 6; k++) {
+        ng.strokeStyle = "rgba(34,228,255,.07)"; ng.beginPath(); ng.moveTo(thumbBox.x + thumbBox.s, thumbBox.y + thumbBox.s * (k + .5) / 6); ng.lineTo(nd.x, nd.y); ng.stroke();
+      }
+    }
+    // connections, coloured by the learned weight: cyan = "yes", pink = "no"
+    for (let li = 1; li < cols.length; li++) {
+      const w = weights[li];
+      cols[li - 1].forEach((a, i) => cols[li].forEach((b, j) => {
+        const v = w && w[i] ? w[i][j] : 0, s = Math.abs(v);
+        ng.strokeStyle = v >= 0 ? `rgba(34,228,255,${0.04 + s * 0.5})` : `rgba(255,79,216,${0.04 + s * 0.5})`;
+        ng.lineWidth = 0.6 + s * 2.2;
+        ng.beginPath(); ng.moveTo(a.x, a.y); ng.lineTo(b.x, b.y); ng.stroke();
+      }));
+    }
+    // travelling signals
+    sparks = sparks.filter((s) => {
+      s.t += 0.045;
+      if (s.t >= 1) {
+        s.b.glow = 1;
+        const next = cols[s.l + 1];
+        if (next) sparks.push({ a: s.b, b: next[Math.floor(Math.random() * next.length)], l: s.l + 1, t: 0 });
+        return false;
+      }
+      const x = s.a.x + (s.b.x - s.a.x) * s.t, y = s.a.y + (s.b.y - s.a.y) * s.t, c = COL[Math.min(4, s.l + 1)];
+      ng.fillStyle = c; ng.shadowColor = c; ng.shadowBlur = 10; ng.beginPath(); ng.arc(x, y, 3, 0, 7); ng.fill(); ng.shadowBlur = 0;
+      return true;
+    });
+    // neurons: brightness = how strongly each one fires for YOUR drawing
+    const L = cols.length;
+    cols.forEach((col, li) => {
+      const out = li === L - 1, c = out ? COL[4] : COL[1 + (li % 3)];
+      const rad = Math.max(6, Math.min(15, (H * 0.76) / (col.length * 2.6)));
+      col.forEach((nd) => {
+        nd.glow *= 0.92;
+        const lv = nodeLevel(nd), R = rad * nd.r * (1 + 0.25 * lv);
+        ng.fillStyle = "#150f3a"; ng.beginPath(); ng.arc(nd.x, nd.y, R, 0, 7); ng.fill();
+        ng.globalAlpha = 0.25 + 0.75 * lv; ng.fillStyle = c; ng.shadowColor = c; ng.shadowBlur = 6 + 26 * Math.max(lv, nd.glow);
+        ng.beginPath(); ng.arc(nd.x, nd.y, R, 0, 7); ng.fill(); ng.globalAlpha = 1; ng.shadowBlur = 0;
+        ng.strokeStyle = c; ng.lineWidth = 2; ng.beginPath(); ng.arc(nd.x, nd.y, R, 0, 7); ng.stroke();
+        if (out) {
+          ng.fillStyle = lv > 0.5 ? "#b6ff3b" : "rgba(245,242,255,.8)"; ng.font = `700 ${Math.round(rad * 1.3)}px Fredoka, sans-serif`;
+          ng.textAlign = "left"; ng.textBaseline = "middle"; ng.fillText(nd.j, nd.x + rad + 8, nd.y + 1);
+          if (probs && lv > 0.05) { ng.font = "600 12px JetBrains Mono, monospace"; ng.fillStyle = "rgba(183,176,216,.9)"; ng.fillText(Math.round(lv * 100) + "%", nd.x + rad + 28, nd.y + 1); }
+        }
+      });
+      if (!out) {
+        const n = hidden[li]; ng.fillStyle = "rgba(183,176,216,.9)"; ng.font = "600 14px Outfit, sans-serif"; ng.textAlign = "center"; ng.textBaseline = "alphabetic";
+        ng.fillText(`${n} neurons`, col[0].tx, H * 0.95);
+        if (n > SHOW) { ng.font = "500 12px Outfit, sans-serif"; ng.fillText(`(${SHOW} shown)`, col[0].tx, H * 0.95 + 15); }
+      }
+    });
+    if (!hidden.length && cols[0]) {
+      ng.fillStyle = "rgba(255,197,61,.9)"; ng.font = "600 16px Outfit, sans-serif"; ng.textAlign = "center";
+      ng.fillText("No hidden layers: pixels go straight to the answer", W * 0.5, H * 0.06);
+    }
+  }
+  new ResizeObserver(resize).observe(net);
+
+  // ---------------------------------------------------------------- boot --
+  renderLayers(); changed(false); clearPad(); drawChart(); requestAnimationFrame(frame);
+  (async () => {
+    try {
+      await FX.need("tf", 20000);
+      await tf.ready();
+      data = await FX.timeout(loadData(), 45000, "Loading the digits");
+      buildModel(); predictPad();
+      $("loading").remove();
+      setTrainBtn();
+      FX.toast("🧠 Ready! Design your layers, then press Train.");
+    } catch (err) {
+      console.error(err);
+      $("loading").innerHTML = `<div class="notice" style="max-width:26em">😕 ${err.friendly || err.message}<br><br>You can still build a brain on the left and see how many numbers it has to learn — and press 🐍 to see the Python.</div>`;
+      $("train").innerHTML = "Offline"; $("train").disabled = true;
+    }
+  })();
+})();
+</script>
+</body>
+</html>

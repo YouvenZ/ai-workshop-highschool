@@ -1,0 +1,6 @@
+{
+ "train": 10000,
+ "test": 1000,
+ "size": 28,
+ "source": "MNIST \u2014 LeCun, Cortes & Burges, CC BY-SA 3.0"
+}

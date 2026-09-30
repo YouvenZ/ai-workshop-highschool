@@ -132,6 +132,19 @@
     return { start() { if (!raf) { layout(); tick(); } }, stop() { cancelAnimationFrame(raf); raf = 0; } };
   })();
 
+  // ---------- "every AI in a few lines of Python" grid ----------
+  // Built from the same snippets the 🐍 buttons show, so the line counts are
+  // always the real ones.
+  (function pyGrid() {
+    const box = document.getElementById("pygrid"), all = window.PY_SNIPPETS;
+    if (!box) return;
+    if (!all) { box.innerHTML = '<p class="muted">The Python examples didn\'t load — check the connection.</p>'; return; }
+    box.innerHTML = Object.entries(all).map(([id, s]) => {
+      const n = s.code.split("\n").filter((l) => l.trim() && !l.trim().startsWith("#")).length;
+      return `<button class="pycard" data-py="${id}"><span class="e">${s.emoji}</span><b>${s.title}</b><small><i>${n}</i> lines of Python</small></button>`;
+    }).join("");
+  })();
+
   // ---------- per-slide hooks ----------
   function onSlide(slide) {
     syncFrames(slide);

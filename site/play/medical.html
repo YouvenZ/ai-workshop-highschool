@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20100%20100%27%3E%3Ctext%20y%3D%27.9em%27%20font-size%3D%2790%27%3E%F0%9F%A9%BA%3C/text%3E%3C/svg%3E">
+<title>AI Doctor's Assistant · AI Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=JetBrains+Mono:wght@500&family=Outfit:wght@400;600;800&display=swap">
+<link rel="stylesheet" href="../css/theme.css">
+<script>/* before first paint: embedded in the deck? (fx.js loads later, after any CDN libraries) */if(/[?&]embed=1\b/.test(location.search)||window.self!==window.top)document.documentElement.classList.add("embedded");</script>
+<style>
+  :root { --ar: 1.6; --below: 190px; }
+  html.embedded { font-size: clamp(12px, .85vw, 18px); }
+  .under { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; align-items: stretch; }
+  @media (max-width: 700px) { .under { grid-template-columns: 1fr; } }
+  .under .ask { margin: 0; background: rgba(255,197,61,.07); border-radius: var(--radius-sm); padding: .6em .8em; line-height: 1.35; }
+  .lab { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 24em); gap: 14px; align-items: start; }
+  @media (max-width: 900px) { .lab { grid-template-columns: 1fr; } }
+  .side h3 { font-size: 1rem; margin: 0 0 .3rem; color: var(--muted); font-family: var(--font-body); font-weight: 600; }
+  .axes { display: grid; grid-template-columns: auto 1fr; gap: 6px 8px; align-items: center; font-weight: 600; }
+  .axes select { width: 100%; }
+  .legend { display: flex; gap: 1rem; flex-wrap: wrap; font-weight: 600; font-size: .95rem; margin-top: 8px; justify-content: center; }
+  .legend .b { color: var(--cyan); } .legend .m { color: var(--pink); }
+  .risk { display: grid; gap: .3rem; }
+  .risk .val { font-family: var(--font-display); font-size: 2.1rem; line-height: 1; }
+  .meter { height: 14px; border-radius: 999px; background: linear-gradient(90deg, var(--cyan), #8b5cff 50%, var(--pink)); position: relative; }
+  .meter i { position: absolute; top: -5px; width: 6px; height: 24px; border-radius: 3px; background: #fff; box-shadow: 0 0 12px #fff; transform: translateX(-50%); transition: left .15s; }
+  .meter b { position: absolute; top: -8px; bottom: -8px; width: 2px; background: var(--amber); transform: translateX(-50%); }
+  .cm { display: grid; grid-template-columns: auto 1fr 1fr; gap: 6px; font-size: .9rem; }
+  .cm .h { color: var(--muted); font-weight: 600; text-align: center; align-self: end; }
+  .cm .r { color: var(--muted); font-weight: 600; writing-mode: horizontal-tb; align-self: center; font-size: .82rem; }
+  .cm .cell { border-radius: 14px; padding: .45em .5em; text-align: center; border: 1px solid var(--stroke); background: var(--glass); transition: transform .2s; }
+  .cm .cell .n { display: block; font-family: var(--font-display); font-size: 1.8rem; line-height: 1.05; }
+  .cm .good { border-color: rgba(182,255,59,.5); } .cm .good .n { color: var(--lime); }
+  .cm .fn { border-color: var(--red); background: rgba(255,90,110,.12); } .cm .fn .n { color: var(--red); }
+  .cm .fp { border-color: var(--amber); background: rgba(255,197,61,.1); } .cm .fp .n { color: var(--amber); }
+  .cm .cell.bump { transform: scale(1.08); }
+  .ethics { border: 1px solid rgba(34,228,255,.5); background: rgba(34,228,255,.07); border-radius: var(--radius-sm); padding: .6em .8em; line-height: 1.35; font-size: .92rem; }
+  .ask { border-left: 4px solid var(--amber); padding: .2em .8em; font-weight: 600; }
+  .wrap { position: relative; }
+  .cap { position: absolute; left: 12px; top: 10px; pointer-events: none; font-weight: 700; color: var(--muted); font-size: .95rem; }
+</style>
+</head>
+<body class="play" data-py="medical">
+<div class="aurora"></div><canvas id="particles"></canvas>
+
+<header class="top">
+  <h1>🩺 <span class="grad">AI Doctor's Assistant</span></h1>
+  <a class="back" href="./">← all activities</a>
+</header>
+
+<main class="lab">
+  <div>
+    <div class="wrap">
+      <canvas class="board" id="board" width="960" height="600" aria-label="Patients plotted by two measurements"></canvas>
+      <div class="cap" id="cap">569 real patients · drag the ❓ patient</div>
+    </div>
+    <div class="legend">
+      <span class="b">● healthy (benign)</span><span class="m">▲ cancer (malignant)</span>
+      <span class="muted">◌ hollow = test patients the AI never trains on</span>
+    </div>
+    <div class="under">
+      <p class="ask">🤔 Which mistake is worse for a patient: a <b class="red">missed cancer</b> or a <b style="color:var(--amber)">false alarm</b>? Where would <i>you</i> set the slider?</p>
+      <div class="ethics">⚕️ <b>The AI assists — a doctor decides.</b> Real, anonymous data from 569 biopsies (University of Wisconsin). A tool like this helps doctors look twice; it never replaces them.</div>
+    </div>
+  </div>
+
+  <aside class="glass panel stack side">
+    <div>
+      <h3>1 · What should the AI look at?</h3>
+      <div class="axes">
+        <span>↔</span><select id="fx"></select>
+        <span>↕</span><select id="fy"></select>
+      </div>
+      <p class="muted" id="help" style="margin:.4em 0 0;font-size:.85rem"></p>
+    </div>
+    <div class="row">
+      <button class="btn primary" id="train">🧠 Train the AI</button>
+      <button class="btn" id="all" title="Use all 30 measurements instead of 2">🔬 Use all 30</button>
+    </div>
+
+    <div class="risk">
+      <h3>2 · New patient ❓ <span class="muted" style="font-weight:400">— drag it on the chart</span></h3>
+      <div class="row" style="justify-content:space-between"><span class="val" id="riskVal">—</span><span id="riskTxt" style="font-weight:700"></span></div>
+      <div class="meter"><b id="thMark"></b><i id="riskMark" style="left:50%"></i></div>
+    </div>
+
+    <div>
+      <h3>3 · Say "cancer" when the risk is above <b id="thv" style="color:var(--amber)">50%</b></h3>
+      <input type="range" id="th" min="5" max="95" step="5" value="50" aria-label="decision threshold">
+    </div>
+
+    <div>
+      <h3>4 · Its mistakes on <b id="nTest">142</b> test patients <span class="muted" id="acc"></span></h3>
+      <div class="cm">
+        <span></span><span class="h">AI: "cancer"</span><span class="h">AI: "healthy"</span>
+        <span class="r">Really<br>cancer</span>
+        <div class="cell good" id="tp"><span class="n">–</span>✅ caught</div>
+        <div class="cell fn" id="fn"><span class="n">–</span>🚨 MISSED cancer</div>
+        <span class="r">Really<br>healthy</span>
+        <div class="cell fp" id="fp"><span class="n">–</span>⚠️ false alarm</div>
+        <div class="cell good" id="tn"><span class="n">–</span>✅ cleared</div>
+      </div>
+    </div>
+    <div class="notice hidden" id="err"></div>
+  </aside>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+<script src="../js/fx.js"></script>
+<script src="../js/python-snippets.js"></script>
+<script src="../js/python-panel.js"></script>
+<script>
+(function () {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const board = $("board"), g = board.getContext("2d"), W = board.width, H = board.height;
+  const PAD = { l: 70, r: 20, t: 40, b: 56 };
+  const GX = 96, GY = 60;                          // probability map resolution
+  const map = document.createElement("canvas"); map.width = GX; map.height = GY;
+  const sig = (z) => 1 / (1 + Math.exp(-z));
+
+  let D, feats, fx = 0, fy = 2, th = 0.5;
+  let model = null;              // 2-feature logistic regression { w: [w1, w2], b, mu, sd }
+  let full = null;               // 30-feature model, when "Use all 30" is on
+  let useAll = false, anim = 0, patient = null, dragging = false, ranges;
+
+  // ------------------------------------------------------------ helpers --
+  const col = (k) => D.rows.map((r) => r[feats[k].index]);
+  function stats(xs) { const m = xs.reduce((a, b) => a + b, 0) / xs.length; const s = Math.sqrt(xs.reduce((a, b) => a + (b - m) ** 2, 0) / xs.length) || 1; return [m, s]; }
+  function rangeOf(xs) { let lo = Math.min(...xs), hi = Math.max(...xs); const p = (hi - lo) * 0.06; return [lo - p, hi + p]; }
+  const toX = (v) => PAD.l + (v - ranges[0][0]) / (ranges[0][1] - ranges[0][0]) * (W - PAD.l - PAD.r);
+  const toY = (v) => H - PAD.b - (v - ranges[1][0]) / (ranges[1][1] - ranges[1][0]) * (H - PAD.t - PAD.b);
+  const fromX = (x) => ranges[0][0] + (x - PAD.l) / (W - PAD.l - PAD.r) * (ranges[0][1] - ranges[0][0]);
+  const fromY = (y) => ranges[1][0] + (H - PAD.b - y) / (H - PAD.t - PAD.b) * (ranges[1][1] - ranges[1][0]);
+  const fmt = (v) => Math.abs(v) >= 100 ? v.toFixed(0) : Math.abs(v) >= 1 ? v.toFixed(1) : v.toFixed(3);
+
+  // ----------------------------------------------------- the 2-D model --
+  function freshModel() {
+    const xa = col(fx), ya = col(fy), tr = D.test.map((t) => !t);
+    const [mx, sx] = stats(xa.filter((_, i) => tr[i])), [my, sy] = stats(ya.filter((_, i) => tr[i]));
+    return { w: [0, 0], b: 0, mu: [mx, my], sd: [sx, sy], xa, ya };
+  }
+  // One pass of gradient descent over the TRAINING patients only.
+  function step(m, lr) {
+    let g1 = 0, g2 = 0, gb = 0, n = 0;
+    for (let i = 0; i < D.rows.length; i++) {
+      if (D.test[i]) continue;
+      const a = (m.xa[i] - m.mu[0]) / m.sd[0], c = (m.ya[i] - m.mu[1]) / m.sd[1];
+      const e = sig(m.w[0] * a + m.w[1] * c + m.b) - D.diagnosis[i];
+      g1 += e * a; g2 += e * c; gb += e; n++;
+    }
+    m.w[0] -= lr * g1 / n; m.w[1] -= lr * g2 / n; m.b -= lr * gb / n;
+  }
+  const p2 = (m, x, y) => sig(m.w[0] * (x - m.mu[0]) / m.sd[0] + m.w[1] * (y - m.mu[1]) / m.sd[1] + m.b);
+
+  // ----------------------------------------------- the 30-feature model --
+  function trainFull() {
+    const tr = D.rows.filter((_, i) => !D.test[i]), k = D.features.length;
+    const mu = [], sd = [];
+    for (let j = 0; j < k; j++) { const [m, s] = stats(tr.map((r) => r[j])); mu.push(m); sd.push(s); }
+    const w = new Array(k).fill(0); let b = 0;
+    const Z = D.rows.map((r) => r.map((v, j) => (v - mu[j]) / sd[j]));
+    for (let it = 0; it < 400; it++) {
+      const gw = new Array(k).fill(0); let gb = 0, n = 0;
+      for (let i = 0; i < Z.length; i++) {
+        if (D.test[i]) continue;
+        let z = b; for (let j = 0; j < k; j++) z += w[j] * Z[i][j];
+        const e = sig(z) - D.diagnosis[i];
+        for (let j = 0; j < k; j++) gw[j] += e * Z[i][j];
+        gb += e; n++;
+      }
+      for (let j = 0; j < k; j++) w[j] -= 0.5 * (gw[j] / n + 0.01 * w[j]);
+      b -= 0.5 * gb / n;
+    }
+    return { prob: (i) => { let z = b; for (let j = 0; j < k; j++) z += w[j] * Z[i][j]; return sig(z); } };
+  }
+
+  // ---------------------------------------------------------- the maths --
+  function probOf(i) { return useAll && full ? full.prob(i) : model ? p2(model, model.xa[i], model.ya[i]) : null; }
+  function confusion() {
+    const c = { tp: 0, fn: 0, fp: 0, tn: 0 }; let n = 0;
+    for (let i = 0; i < D.rows.length; i++) {
+      if (!D.test[i]) continue;
+      const p = probOf(i); if (p == null) return null;
+      const say = p >= th, sick = D.diagnosis[i] === 1; n++;
+      c[sick ? (say ? "tp" : "fn") : (say ? "fp" : "tn")]++;
+    }
+    c.acc = (c.tp + c.tn) / n; return c;
+  }
+  let lastCM = {};
+  function showCM() {
+    const c = confusion();
+    for (const k of ["tp", "fn", "fp", "tn"]) {
+      const el = $(k), v = c ? c[k] : "–";
+      if (lastCM[k] !== v) { el.querySelector(".n").textContent = v; el.classList.add("bump"); setTimeout(() => el.classList.remove("bump"), 180); }
+      lastCM[k] = v;
+    }
+    $("acc").textContent = c ? `· ${Math.round(c.acc * 100)}% right` + (useAll ? " (all 30 measurements)" : "") : "";
+  }
+  function showRisk() {
+    if (!patient) return;
+    const p = model ? p2(model, patient.x, patient.y) : null;
+    $("riskMark").style.left = (p == null ? 50 : p * 100) + "%";
+    $("thMark").style.left = th * 100 + "%";
+    if (p == null) { $("riskVal").textContent = "—"; $("riskTxt").textContent = "Train the AI first"; return; }
+    $("riskVal").textContent = Math.round(p * 100) + "% risk";
+    $("riskTxt").innerHTML = p >= th ? '<span class="red">🔴 More tests, see a specialist</span>' : '<span class="c1">🟢 Probably fine — routine check-up</span>';
+  }
+
+  // -------------------------------------------------------------- draw --
+  function buildMap() {
+    const img = map.getContext("2d").createImageData(GX, GY);
+    if (model) for (let gy = 0; gy < GY; gy++) for (let gx = 0; gx < GX; gx++) {
+      const x = fromX(PAD.l + (gx + .5) / GX * (W - PAD.l - PAD.r)), y = fromY(PAD.t + (gy + .5) / GY * (H - PAD.t - PAD.b));
+      const p = p2(model, x, y), k = (gy * GX + gx) * 4, s = Math.abs(p - 0.5) * 2;
+      img.data[k] = 34 + (255 - 34) * p; img.data[k + 1] = 228 - (228 - 79) * p; img.data[k + 2] = 255 - (255 - 216) * p; img.data[k + 3] = 30 + 70 * s;
+    }
+    map.getContext("2d").putImageData(img, 0, 0);
+  }
+  function draw() {
+    g.clearRect(0, 0, W, H);
+    if (model) { g.imageSmoothingEnabled = true; g.drawImage(map, PAD.l, PAD.t, W - PAD.l - PAD.r, H - PAD.t - PAD.b); }
+    // axes
+    g.strokeStyle = "rgba(255,255,255,.25)"; g.lineWidth = 1.5;
+    g.beginPath(); g.moveTo(PAD.l, PAD.t); g.lineTo(PAD.l, H - PAD.b); g.lineTo(W - PAD.r, H - PAD.b); g.stroke();
+    g.fillStyle = "rgba(183,176,216,.95)"; g.font = "600 22px Outfit, sans-serif";
+    g.textAlign = "center"; g.textBaseline = "alphabetic"; g.fillText(feats[fx].name + " →", (PAD.l + W - PAD.r) / 2, H - 14);
+    g.save(); g.translate(26, (PAD.t + H - PAD.b) / 2); g.rotate(-Math.PI / 2); g.fillText(feats[fy].name + " →", 0, 0); g.restore();
+    g.font = "500 15px JetBrains Mono, monospace"; g.fillStyle = "rgba(183,176,216,.6)";
+    for (let k = 0; k <= 4; k++) {
+      const vx = ranges[0][0] + (ranges[0][1] - ranges[0][0]) * k / 4, vy = ranges[1][0] + (ranges[1][1] - ranges[1][0]) * k / 4;
+      g.textAlign = "center"; g.fillText(fmt(vx), toX(vx), H - PAD.b + 20);
+      g.textAlign = "right"; g.fillText(fmt(vy), PAD.l - 8, toY(vy) + 5);
+    }
+    // the decision line: where risk = threshold
+    if (model && (model.w[0] || model.w[1])) {
+      const L = Math.log(th / (1 - th)) - model.b, [w1, w2] = model.w, [m1, m2] = model.mu, [s1, s2] = model.sd;
+      const pts = [];
+      if (Math.abs(w2) > 1e-9) for (const x of [ranges[0][0], ranges[0][1]]) pts.push([x, m2 + s2 * (L - w1 * (x - m1) / s1) / w2]);
+      else pts.push([m1 + s1 * L / w1, ranges[1][0]], [m1 + s1 * L / w1, ranges[1][1]]);
+      g.save(); g.beginPath(); g.rect(PAD.l, PAD.t, W - PAD.l - PAD.r, H - PAD.t - PAD.b); g.clip();
+      g.strokeStyle = "#ffc53d"; g.lineWidth = 4; g.setLineDash([14, 10]); g.shadowColor = "#ffc53d"; g.shadowBlur = 14;
+      g.beginPath(); g.moveTo(toX(pts[0][0]), toY(pts[0][1])); g.lineTo(toX(pts[1][0]), toY(pts[1][1])); g.stroke(); g.restore();
+    }
+    // patients
+    const xa = col(fx), ya = col(fy);
+    for (let i = 0; i < xa.length; i++) {
+      const x = toX(xa[i]), y = toY(ya[i]), sick = D.diagnosis[i] === 1, test = D.test[i] === 1;
+      const c = sick ? "#ff4fd8" : "#22e4ff";
+      g.fillStyle = c; g.strokeStyle = c; g.lineWidth = 2;
+      g.beginPath();
+      if (sick) { g.moveTo(x, y - 7); g.lineTo(x + 6.5, y + 5); g.lineTo(x - 6.5, y + 5); g.closePath(); } else g.arc(x, y, 5, 0, 7);
+      if (test) g.stroke(); else { g.globalAlpha = .85; g.fill(); g.globalAlpha = 1; }
+    }
+    // the new patient
+    if (patient) {
+      const x = toX(patient.x), y = toY(patient.y), t = performance.now() / 400;
+      g.strokeStyle = "rgba(255,255,255,.8)"; g.lineWidth = 3;
+      g.beginPath(); g.arc(x, y, 26 + 4 * Math.sin(t), 0, 7); g.stroke();
+      g.fillStyle = "rgba(10,7,32,.85)"; g.beginPath(); g.arc(x, y, 22, 0, 7); g.fill();
+      g.font = "28px system-ui, 'Apple Color Emoji', 'Segoe UI Emoji'"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("❓", x, y + 1);
+      g.textBaseline = "alphabetic";
+    }
+    if (!model) {
+      g.fillStyle = "rgba(10,7,32,.6)"; g.fillRect(W / 2 - 250, 60, 500, 54);
+      g.fillStyle = "#fff"; g.font = "600 26px Outfit, sans-serif"; g.textAlign = "center"; g.fillText("Press 🧠 Train the AI to draw its boundary", W / 2, 96);
+    }
+    requestAnimationFrame(draw);
+  }
+
+  // ----------------------------------------------------------- actions --
+  function setup() {
+    ranges = [rangeOf(col(fx)), rangeOf(col(fy))];
+    model = null; full = null; useAll = false; $("all").classList.remove("on");
+    patient = { x: (ranges[0][0] + ranges[0][1]) / 2, y: (ranges[1][0] + ranges[1][1]) / 2 };
+    $("help").innerHTML = `↔ <b>${feats[fx].name}</b>: ${feats[fx].help}.<br>↕ <b>${feats[fy].name}</b>: ${feats[fy].help}.`;
+    buildMap(); showCM(); showRisk();
+  }
+  function train() {
+    cancelAnimationFrame(anim);
+    model = freshModel(); let it = 0;
+    // Animate learning: 90 small steps, so the boundary visibly swings into place.
+    (function tick() {
+      for (let k = 0; k < 3; k++) step(model, 0.8);
+      it++; buildMap(); showCM(); showRisk();
+      if (it < 90) anim = requestAnimationFrame(tick);
+      else {
+        const c = confusion();
+        FX.toast(`Trained on ${D.rows.length - D.test.reduce((a, b) => a + b, 0)} patients: ${Math.round(c.acc * 100)}% right on ${$("nTest").textContent} it never saw. Now move the slider!`, 4200);
+        if (c.acc > 0.9) FX.confetti({ particleCount: 70 });
+      }
+    })();
+  }
+
+  board.addEventListener("pointerdown", (e) => {
+    e.stopPropagation();
+    const p = FX.canvasPoint(board, e);
+    if (p.x < PAD.l || p.x > W - PAD.r || p.y < PAD.t || p.y > H - PAD.b) return;
+    dragging = true; board.setPointerCapture(e.pointerId);
+    patient = { x: fromX(p.x), y: fromY(p.y) }; showRisk();
+  });
+  board.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    const p = FX.canvasPoint(board, e);
+    patient = { x: fromX(Math.max(PAD.l, Math.min(W - PAD.r, p.x))), y: fromY(Math.max(PAD.t, Math.min(H - PAD.b, p.y))) };
+    showRisk();
+    $("cap").textContent = `❓ ${feats[fx].name} ${fmt(patient.x)} · ${feats[fy].name} ${fmt(patient.y)}`;
+  });
+  const stop = () => { dragging = false; };
+  board.addEventListener("pointerup", stop); board.addEventListener("pointercancel", stop);
+
+  $("train").addEventListener("click", train);
+  $("th").addEventListener("input", (e) => { th = e.target.value / 100; $("thv").textContent = e.target.value + "%"; showCM(); showRisk(); });
+  $("all").addEventListener("click", (e) => {
+    if (!model) train();
+    useAll = !useAll; e.currentTarget.classList.toggle("on", useAll);
+    if (useAll && !full) full = trainFull();
+    showCM();
+    FX.toast(useAll ? "All 30 measurements: fewer mistakes — but a human still can't 'see' 30 dimensions!" : "Back to the 2 measurements on the chart.", 3600);
+  });
+  function fillSelect(sel, v) {
+    sel.innerHTML = feats.map((f, i) => `<option value="${i}">${f.name}</option>`).join("");
+    sel.value = v;
+    sel.addEventListener("change", () => { if (sel.id === "fx") fx = +sel.value; else fy = +sel.value; setup(); });
+  }
+
+  (async () => {
+    try {
+      D = await FX.timeout(fetch("../data/breast_cancer.json").then((r) => { if (!r.ok) throw new Error("data file missing"); return r.json(); }), 20000, "Loading the patient data");
+      feats = D.friendly;
+      $("nTest").textContent = D.test.reduce((a, b) => a + b, 0);
+      fillSelect($("fx"), fx); fillSelect($("fy"), fy);
+      setup(); requestAnimationFrame(draw);
+    } catch (err) {
+      const n = $("err"); n.classList.remove("hidden");
+      n.textContent = "😕 Couldn't load the patient data (" + err.message + "). Reload the page — it's a small file on this website.";
+    }
+  })();
+})();
+</script>
+</body>
+</html>

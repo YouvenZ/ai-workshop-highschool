@@ -7,6 +7,9 @@
    pinned to an exact version (name@1.2.3) — an unpinned "latest" can change
    under you the night before the workshop.
 4. Every bundled TF.js model.json lists weight shards that are really there.
+5. Every activity in play/ has a 🐍 Python snippet, loads the panel, is linked
+   from the hub (play/index.html) and has a slide in the deck; every data-py
+   button points at a snippet that exists.
 
 No dependencies beyond the standard library. Exit code 1 on any problem.
 """
@@ -23,7 +26,7 @@ SITE = Path(__file__).resolve().parent.parent / "site"
 PINNED = re.compile(r"@\d+\.\d+\.\d+(/|$)")
 # Fonts are the one external resource that is not versioned by URL.
 UNPINNED_OK = ("https://fonts.googleapis.com/", "https://fonts.gstatic.com/")
-JS_ASSET = re.compile(r"""["'`]((?:\.\./|\./)?(?:img|models|css|js|play)/[^"'`\s]+?\.(?:svg|png|jpg|json|css|js|html))["'`]""")
+JS_ASSET = re.compile(r"""["'`]((?:\.\./|\./)?(?:img|models|css|js|play|data)/[^"'`\s]+?\.(?:svg|png|jpg|json|css|js|html|txt|bin))["'`]""")
 
 
 class Refs(HTMLParser):
@@ -64,6 +67,39 @@ def local_target(page: Path, ref: str) -> Path | None:
     return target
 
 
+def check_python_panel() -> list[str]:
+    errors: list[str] = []
+    js = SITE / "js" / "python-snippets.js"
+    if not js.exists():
+        return ["js/python-snippets.js is missing — run `python tools/build_python.py`"]
+    text = js.read_text(encoding="utf-8")
+    snippets = json.loads(text[text.index("window.PY_SNIPPETS = ") + len("window.PY_SNIPPETS = "):].rstrip().rstrip(";"))
+    hub = (SITE / "play" / "index.html").read_text(encoding="utf-8")
+    deck = (SITE / "index.html").read_text(encoding="utf-8")
+    for page in sorted((SITE / "play").glob("*.html")):
+        if page.name == "index.html":
+            continue
+        html = page.read_text(encoding="utf-8")
+        m = re.search(r'<body[^>]*data-py="([^"]+)"', html)
+        rel = page.relative_to(SITE)
+        if not m:
+            errors.append(f"{rel}: <body> has no data-py — the 🐍 button won't appear")
+        elif m.group(1) not in snippets:
+            errors.append(f"{rel}: data-py=\"{m.group(1)}\" has no snippet in tools/python_snippets.py")
+        for need in ("python-snippets.js", "python-panel.js"):
+            if need not in html:
+                errors.append(f"{rel}: does not load js/{need}")
+        if f'href="{page.name}"' not in hub:
+            errors.append(f"{rel}: not linked from the activity hub play/index.html")
+        if f'data-lazy="play/{page.name}"' not in deck:
+            errors.append(f"{rel}: no slide in the deck embeds it")
+    for page in sorted(SITE.rglob("*.html")):
+        for ref in re.findall(r'data-py="([^"]+)"', page.read_text(encoding="utf-8")):
+            if ref not in snippets:
+                errors.append(f"{page.relative_to(SITE)}: data-py=\"{ref}\" has no snippet")
+    return errors
+
+
 def main() -> int:
     errors: list[str] = []
     pages = sorted(SITE.rglob("*.html"))
@@ -101,12 +137,15 @@ def main() -> int:
                 if not (model.parent / shard).exists():
                     errors.append(f"{model.relative_to(SITE)}: weight shard {shard} is missing")
 
+    errors += check_python_panel()
+
     if errors:
         print(f"✗ {len(errors)} problem(s):")
         for e in errors:
             print("  -", e)
         return 1
-    print(f"✓ {len(pages)} pages checked: every local link resolves, every CDN script is pinned, every model is complete.")
+    print(f"✓ {len(pages)} pages checked: every local link resolves, every CDN script is pinned, every model is complete,"
+          " every activity has its 🐍 Python panel.")
     return 0
 
 
