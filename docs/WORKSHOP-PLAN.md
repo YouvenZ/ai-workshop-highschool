@@ -1,6 +1,6 @@
 # Can a Computer Learn? — Workshop Plan
 
-**Presenter:** Dr. Rachid Zeghlache
+**Presenter:** Dr. Rachid Zeghlache — Associate Professor of Artificial Intelligence, American University in Dubai
 
 | | |
 |---|---|
@@ -35,7 +35,7 @@ The bonus slides carry a 🎁 badge in their header.
 ⭐ Train a Camera AI · bias               (🎁 Object Detector)  0:33 – 0:40   computer vision + fairness
 ⭐ Can a computer read? · Mood Reader · Mini ChatGPT            0:40 – 0:49   language (NLP)
 ⭐ AI Doctor's Assistant                                        0:49 – 0:54   real data, real stakes
-⭐ What can AI do · limits · takeaways · Python · thanks        0:54 – 1:00   wrap
+⭐ What can AI do · limits · takeaways · careers · tools · …    0:53 – 1:00   wrap
 ```
 
 ## Minute by minute
@@ -61,12 +61,14 @@ The bonus slides carry a 🎁 badge in their header.
 | **0:40** | 17 | ⭐ **Mood Reader** | Naive Bayes sentiment | Room suggests sentences; point at the green/red words. Then the pink traps: "not good", sarcasm. Teach it one sentence. | It counts words — it doesn't *understand*. |
 | **0:44** | 18 | ⭐ **Mini ChatGPT** | n-gram next-word model | Click top words; ✨ Auto-write; 👀 1 vs 👀👀 2 words; 🥶↔🤪 creativity; paste their own text. | ChatGPT = predict the next word, again and again, with a giant brain. It picks *likely* words, not *true* ones. |
 | **0:49** | 19 | ⭐ **AI Doctor's Assistant** | Logistic regression on 569 biopsies | 🧠 Train (the line swings in). Drag the ❓ patient. Threshold 50 % → 20 %: missed cancers ↓, false alarms ↑. 🔬 all 30 measurements. | Which mistake is worse? **People** choose the trade-off. The AI assists — a doctor decides. |
-| **0:54** | 20 | What can AI do? | 8 cards | Pick 3–4 cards. | Medicine, science, climate, accessibility… |
-| **0:56** | 21 | Watch out for | 4 cards | Tie each to a moment from today. | Hallucinations, deepfakes, bias, privacy. |
-| **0:57** | 22 | Three takeaways | — | Students say each one before you click. | Examples · data · critical thinking. |
-| **0:58** | 23 | Every AI in a few lines of Python | 11 cards | Tap *Build a Brain* to show the code. | You can build these. Colab link. |
-| **0:59** | 24 | Keep playing | QR code | Leave it up while phones scan. | Where to go next. |
-| **1:00** | 25 | Thank you | Confetti | Questions; "what would you teach an AI?" | — |
+| **0:53** | 20 | What can AI do? | 8 cards | Pick 3–4 cards. | Medicine, science, climate, accessibility… |
+| **0:54** | 21 | Watch out for | 4 cards | Tie each to a moment from today. | Hallucinations, deepfakes, bias, privacy. |
+| **0:55** | 22 | Three takeaways | — | Students say each one before you click. | Examples · data · critical thinking. |
+| **0:56** | 23 | Jobs in AI — and AI in every job | 8 career cards | "Which card would *you* pick?" | ML engineer, data scientist, researcher, vision, language AI, healthcare, robotics, ethics — plus AI + any field. |
+| **0:57:30** | 24 | The tools to master, step by step | 8-step path | Don't read all eight — the order is the message. | Maths → Python/Colab → NumPy/pandas → scikit-learn → PyTorch/Keras → Hugging Face → Git/GitHub → Kaggle. One project a month. |
+| **0:58:30** | 25 | Every AI in a few lines of Python | 11 cards | Tap *Build a Brain* to show the code. | You can build these. Colab link. |
+| **0:59** | 26 | Keep playing | QR code | Leave it up while phones scan. | Where to go next. |
+| **1:00** | 27 | Thank you | Confetti | Questions; "what would you teach an AI?" | — |
 
 ## 🐍 "Show me the Python"
 
@@ -94,6 +96,7 @@ then run `python tools/build_python.py`.
 | 3 | Build a Brain: one training run, skip the race | 3 min |
 | 4 | Mood Reader: two sentences + one trap only | 2 min |
 | 5 | "What can AI do?" — 2 cards | 1 min |
+| 6 | Tools slide: show it, name steps 2–4, move on | 30 s |
 | **Never cut** | AI or Not · Teach the Computer · Train a Camera AI **with the bias moment** · Mini ChatGPT · the "which mistake is worse?" moment | — |
 
 **Ahead of schedule?** Run a 🎁 bonus station, or let students open the QR code

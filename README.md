@@ -1,7 +1,8 @@
 # Can a Computer Learn? — a 1-hour AI workshop for high schools
 
 A hands-on, highly visual introduction to **AI and machine learning** for
-students aged roughly 14–18, presented by **Dr. Rachid Zeghlache**. No coding,
+students aged roughly 14–18, presented by **Dr. Rachid Zeghlache**, Associate Professor of Artificial
+Intelligence at the American University in Dubai. No coding,
 no maths, no installs: the slides and all eleven activities run in the browser,
 and students can open the activities on their own phones via a QR code.
 

@@ -5,7 +5,7 @@ Run this. The camera permission and the venue wifi are the two things that bite.
 ## T−3 days
 
 - [ ] Open the **live site** (not a local file) on the laptop you will present from.
-- [ ] Click through all 25 slides. On each activity slide, wait for it to load.
+- [ ] Click through all 27 slides. On each activity slide, wait for it to load.
 - [ ] Slides 10, 13, 15: press **🎥 Start** and **allow the camera**. Tick "remember" if the browser offers it.
       Camera access needs `https://` (GitHub Pages) or `http://localhost` — never `file://`.
 - [ ] Slide 12 (Build a Brain): press **🏋️ Train** — it should reach ~95 % in about 10–20 s on the presenting laptop. Draw a digit: the bars move.
