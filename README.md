@@ -5,7 +5,7 @@ students aged roughly 14–18. No coding, no maths, no installs: the slides and
 all seven activities run in the browser, and students can open the activities
 on their own phones via a QR code.
 
-**▶ Live site:** `https://USER.github.io/ai-workshop-highschool/` (after the
+**▶ Live site:** `https://YouvenZ.github.io/ai-workshop-highschool/` (after the
 first deploy — see below)
 
 | | |
@@ -57,7 +57,7 @@ The camera only works on `https://` or `http://localhost` — opening
 
 1. Create an empty repository on GitHub, e.g. `ai-workshop-highschool`, then:
    ```bash
-   git remote add origin git@github.com:USER/ai-workshop-highschool.git
+   git remote add origin git@github.com:YouvenZ/ai-workshop-highschool.git
    git push -u origin main
    ```
 2. On GitHub: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
@@ -65,7 +65,7 @@ The camera only works on `https://` or `http://localhost` — opening
    `tools/check_site.py` verifies every local link, that every CDN script is
    pinned to an exact version and that the bundled models are complete, then
    publishes `site/`. Pull requests run the check only.
-4. Replace `USER` in this README with your GitHub username.
+4. Forking it to another account? Replace `YouvenZ` in this README.
 
 ## Layout
 
