@@ -10,6 +10,10 @@
 5. Every activity in play/ has a 🐍 Python snippet, loads the panel, is linked
    from the hub (play/index.html) and has a slide in the deck; every data-py
    button points at a snippet that exists.
+6. Every activity loads the 💡 Intuition panel and has What/How/Why + step
+   content in js/intuition-data.js; every illustration it names exists; every
+   data-intu button in the deck points at an activity that has content, and
+   every activity slide has both a 💡 Intuition and a 🐍 Python button.
 
 No dependencies beyond the standard library. Exit code 1 on any problem.
 """
@@ -100,6 +104,51 @@ def check_python_panel() -> list[str]:
     return errors
 
 
+def check_intuition() -> list[str]:
+    errors: list[str] = []
+    js = SITE / "js" / "intuition-data.js"
+    if not js.exists():
+        return ["js/intuition-data.js is missing"]
+    text = js.read_text(encoding="utf-8")
+    arts = set(re.findall(r"^    (\w+): \(\) =>", text, re.M))
+    body = text[text.index("const ACTS = {"):]
+    acts = {}
+    for m in re.finditer(r'^    "?([a-z][\w-]*)"?: \{\n      emoji:', body, re.M):
+        end = body.find("\n    },\n", m.end())
+        acts[m.group(1)] = body[m.end(): end if end > 0 else len(body)]
+    for act, chunk in acts.items():
+        for part in ("what:", "how:", "why:"):
+            if part not in chunk:
+                errors.append(f"intuition-data.js: {act} has no {part[:-1]} card")
+        if "steps: [" not in chunk or "at:" not in chunk:
+            errors.append(f"intuition-data.js: {act} has no step explanations")
+        for name in re.findall(r'art: "([^"]+)"', chunk):
+            if name not in arts:
+                errors.append(f"intuition-data.js: {act} uses unknown illustration \"{name}\"")
+    deck = (SITE / "index.html").read_text(encoding="utf-8")
+    for page in sorted((SITE / "play").glob("*.html")):
+        if page.name == "index.html":
+            continue
+        html = page.read_text(encoding="utf-8")
+        rel = page.relative_to(SITE)
+        m = re.search(r'<body[^>]*data-py="([^"]+)"', html)
+        if m and m.group(1) not in acts:
+            errors.append(f"{rel}: no 💡 Intuition content for \"{m.group(1)}\" in js/intuition-data.js")
+        for need in ("intuition-data.js", "intuition-panel.js"):
+            if need not in html:
+                errors.append(f"{rel}: does not load js/{need}")
+    for ref in re.findall(r'data-intu="([^"]+)"', deck):
+        if ref not in acts:
+            errors.append(f"index.html: data-intu=\"{ref}\" has no content")
+    for head in re.findall(r'<div class="act-head">(.*?)</div>', deck, re.S):
+        if "data-py=" in head and "data-intu=" not in head:
+            errors.append("index.html: an activity slide has a 🐍 button but no 💡 Intuition button")
+    for need in ("intuition-data.js", "intuition-panel.js"):
+        if need not in deck:
+            errors.append(f"index.html: does not load js/{need}")
+    return errors
+
+
 def main() -> int:
     errors: list[str] = []
     pages = sorted(SITE.rglob("*.html"))
@@ -138,6 +187,7 @@ def main() -> int:
                     errors.append(f"{model.relative_to(SITE)}: weight shard {shard} is missing")
 
     errors += check_python_panel()
+    errors += check_intuition()
 
     if errors:
         print(f"✗ {len(errors)} problem(s):")
@@ -145,7 +195,7 @@ def main() -> int:
             print("  -", e)
         return 1
     print(f"✓ {len(pages)} pages checked: every local link resolves, every CDN script is pinned, every model is complete,"
-          " every activity has its 🐍 Python panel.")
+          " every activity has its 🐍 Python and 💡 Intuition panels.")
     return 0
 
 

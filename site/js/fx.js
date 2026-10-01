@@ -28,17 +28,97 @@
     });
   }
 
-  // ---------- confetti (canvas-confetti, optional) ----------
-  FX.confetti = function (opts) {
-    if (typeof window.confetti !== "function") return;
-    const colors = ["#22e4ff", "#ff4fd8", "#ffc53d", "#b6ff3b", "#8b5cff"];
-    window.confetti(Object.assign({ particleCount: 120, spread: 80, origin: { y: 0.7 }, colors }, opts || {}));
+  // ---------- celebrations ----------
+  // Activities celebrate with a NEURAL BURST: glowing neurons fire out from a
+  // point and wire themselves together, then fade — an "aha" that looks like
+  // AI, not like a birthday. Real party confetti (canvas-confetti) is kept for
+  // one moment only: the deck's thank-you slide (FX.party).
+  const NEON = ["34,228,255", "255,79,216", "255,197,61", "182,255,59", "139,92,255"];
+  const reduced = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let burstCv, burstCtx, bursts = [], burstRaf = 0;
+  function burstLoop() {
+    const w = innerWidth, h = innerHeight;
+    burstCtx.clearRect(0, 0, w, h);
+    const now = performance.now();
+    bursts = bursts.filter((b) => now - b.t0 < b.life);
+    for (const b of bursts) {
+      const t = (now - b.t0) / b.life, ease = 1 - Math.pow(1 - Math.min(1, t * 1.6), 3), fade = 1 - Math.max(0, (t - .45) / .55);
+      const pts = b.nodes.map((n) => ({ x: b.x + n.dx * ease, y: b.y + n.dy * ease, c: n.c, r: n.r }));
+      // synapses: each neuron wires to its two nearest neighbours
+      burstCtx.lineWidth = 1.2;
+      for (let i = 0; i < pts.length; i++) {
+        const a = pts[i];
+        b.links[i].forEach((j) => {
+          const c = pts[j];
+          burstCtx.strokeStyle = `rgba(${a.c},${0.45 * fade})`;
+          burstCtx.beginPath(); burstCtx.moveTo(a.x, a.y); burstCtx.lineTo(c.x, c.y); burstCtx.stroke();
+          // a signal racing along the synapse
+          const s = (t * 2.2 + i * .13) % 1;
+          burstCtx.fillStyle = `rgba(255,255,255,${0.9 * fade})`;
+          burstCtx.beginPath(); burstCtx.arc(a.x + (c.x - a.x) * s, a.y + (c.y - a.y) * s, 1.6, 0, 7); burstCtx.fill();
+        });
+      }
+      for (const a of pts) {
+        burstCtx.fillStyle = `rgba(${a.c},${fade})`;
+        burstCtx.shadowColor = `rgba(${a.c},1)`; burstCtx.shadowBlur = 14;
+        burstCtx.beginPath(); burstCtx.arc(a.x, a.y, a.r * (1 + .4 * (1 - ease)), 0, 7); burstCtx.fill();
+      }
+      burstCtx.shadowBlur = 0;
+      // core flash
+      const g = burstCtx.createRadialGradient(b.x, b.y, 0, b.x, b.y, 60 + 120 * ease);
+      g.addColorStop(0, `rgba(255,255,255,${0.35 * (1 - t)})`); g.addColorStop(1, "rgba(255,255,255,0)");
+      burstCtx.fillStyle = g; burstCtx.beginPath(); burstCtx.arc(b.x, b.y, 60 + 120 * ease, 0, 7); burstCtx.fill();
+    }
+    burstRaf = bursts.length ? requestAnimationFrame(burstLoop) : 0;
+    if (!burstRaf) burstCtx.clearRect(0, 0, w, h);
+  }
+  FX.burst = function (opts) {
+    if (reduced()) return;
+    opts = opts || {};
+    if (!burstCv) {
+      burstCv = document.createElement("canvas");
+      burstCv.className = "fx-burst";
+      burstCv.style.cssText = "position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:150";
+      document.body.appendChild(burstCv);
+      burstCtx = burstCv.getContext("2d");
+    }
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    if (burstCv.width !== Math.round(innerWidth * dpr)) {
+      burstCv.width = Math.round(innerWidth * dpr); burstCv.height = Math.round(innerHeight * dpr);
+      burstCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    const o = opts.origin || {};
+    const x = (o.x != null ? o.x : 0.5) * innerWidth, y = (o.y != null ? o.y : 0.6) * innerHeight;
+    const n = Math.max(10, Math.min(34, Math.round((opts.particleCount || 60) / 3)));
+    const R = Math.min(innerWidth, innerHeight) * (opts.spread ? opts.spread / 260 : 0.28);
+    const nodes = Array.from({ length: n }, (_, i) => {
+      const a = (i / n) * Math.PI * 2 + Math.random() * .5, d = R * (.35 + Math.random() * .65);
+      return { dx: Math.cos(a) * d, dy: Math.sin(a) * d, c: NEON[i % NEON.length], r: 2 + Math.random() * 2.5 };
+    });
+    const links = nodes.map((a, i) => nodes.map((b, j) => [j, Math.hypot(a.dx - b.dx, a.dy - b.dy)])
+      .filter(([j]) => j !== i).sort((p, q) => p[1] - q[1]).slice(0, 2).map(([j]) => j));
+    bursts.push({ x, y, nodes, links, t0: performance.now(), life: 1300 });
+    if (!burstRaf) burstRaf = requestAnimationFrame(burstLoop);
   };
-  FX.fireworks = function (ms) {
+  // A short volley of bursts across the screen (an activity's grand finale).
+  FX.burstShow = function (ms) {
+    const end = Date.now() + (ms || 1400);
+    (function next() {
+      FX.burst({ particleCount: 70, origin: { x: .15 + Math.random() * .7, y: .25 + Math.random() * .5 } });
+      if (Date.now() < end) setTimeout(next, 260);
+    })();
+  };
+  // Back-compatible names used by the activities: they now fire neural bursts.
+  FX.confetti = function (opts) { FX.burst(opts); };
+  FX.fireworks = function (ms) { FX.burstShow(ms); };
+  // The one real party: confetti cannons for the deck's final slide.
+  FX.party = function (ms) {
+    if (typeof window.confetti !== "function") return FX.burstShow(ms);
+    const colors = ["#22e4ff", "#ff4fd8", "#ffc53d", "#b6ff3b", "#8b5cff"];
     const end = Date.now() + (ms || 1600);
     (function frame() {
-      FX.confetti({ particleCount: 6, angle: 60, spread: 60, origin: { x: 0, y: 0.8 } });
-      FX.confetti({ particleCount: 6, angle: 120, spread: 60, origin: { x: 1, y: 0.8 } });
+      window.confetti({ particleCount: 6, angle: 60, spread: 60, origin: { x: 0, y: 0.8 }, colors });
+      window.confetti({ particleCount: 6, angle: 120, spread: 60, origin: { x: 1, y: 0.8 }, colors });
       if (Date.now() < end) requestAnimationFrame(frame);
     })();
   };

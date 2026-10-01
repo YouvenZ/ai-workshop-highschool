@@ -1,7 +1,7 @@
 # Can a Computer Learn? — a 1-hour AI workshop for high schools
 
 A hands-on, highly visual introduction to **AI and machine learning** for
-students aged roughly 14–18, presented by **Dr. Rachid Zeghlache**, Associate Professor of Artificial
+students aged roughly 14–18, presented by **Dr. Rachid Zeghlache**, Assistant Professor of Artificial
 Intelligence at the American University in Dubai. No coding,
 no maths, no installs: the slides and all eleven activities run in the browser,
 and students can open the activities on their own phones via a QR code.
@@ -9,6 +9,9 @@ and students can open the activities on their own phones via a QR code.
 Every activity has a **🐍 Show me the Python** button: the same AI as a short,
 fully explained Python program (7–16 lines), which students can run for free in
 [Google Colab](https://colab.research.google.com/github/YouvenZ/ai-workshop-highschool/blob/main/notebooks/try-it-in-python.ipynb).
+And a **💡 Intuition** button: three illustrated cards — *what* the AI does, *how*
+it works, *why* it matters — plus a 💡 next to every instruction that explains
+that step.
 
 **▶ Live site:** <https://youvenz.github.io/ai-workshop-highschool/> ·
 **🧪 Activities:** <https://youvenz.github.io/ai-workshop-highschool/play/>
@@ -88,7 +91,9 @@ site/
 ├── index.html            the deck (reveal.js 5, layout disabled → responsive CSS)
 ├── css/theme.css         design tokens + shared components (deck AND activities)
 ├── css/deck.css          slide layouts
-├── js/fx.js              confetti, particles, camera helper, key forwarding
+├── js/fx.js              neural-burst celebrations, particles, camera helper, key forwarding
+├── js/intuition-panel.js the 💡 Intuition panel + step 💡s (one component, used everywhere)
+├── js/intuition-data.js  ALL the What/How/Why + step explanations and their illustrations
 ├── js/deck.js            reveal setup, lazy iframes, timers, QR, neural-net animation, Python grid
 ├── js/python-panel.js    the 🐍 "Show me the Python" panel (one component, used everywhere)
 ├── js/python-snippets.js GENERATED — the Python programs the panel shows

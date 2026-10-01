@@ -80,36 +80,72 @@
 
   <div class="row" style="justify-content:space-between">
     <span class="score" id="score">Score: 0 / 0</span>
+    <span class="muted" id="poolNote" style="font-size:.9rem">12 cards from a deck of 28 — every round is different</span>
     <span class="row">
       <button class="btn" id="reveal">👀 Reveal all</button>
-      <button class="btn primary" id="reset">🔄 Play again</button>
+      <button class="btn primary" id="reset">🔀 New round</button>
     </span>
   </div>
 </main>
 
-<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 <script src="../js/fx.js"></script>
 <script src="../js/python-snippets.js"></script>
 <script src="../js/python-panel.js"></script>
+<script src="../js/intuition-data.js"></script>
+<script src="../js/intuition-panel.js"></script>
 <script>
 (function () {
   "use strict";
   // ai: true means "learned from data". The explanation is what matters:
   // it is always about WHERE the behaviour came from — rules or examples.
-  const CARDS = [
-    { e: "📧", t: "Spam filter",              ai: true,  why: "It learned what spam looks like from millions of emails people marked as spam." },
-    { e: "🧮", t: "Calculator",                ai: false, why: "Every button follows a rule a programmer wrote. 2 + 2 is never a guess." },
-    { e: "🎬", t: "Netflix recommendations",   ai: true,  why: "It learns from what you — and millions of people like you — watched and skipped." },
-    { e: "🔓", t: "Face unlock",               ai: true,  why: "A neural network learned what YOUR face looks like from a few scans." },
-    { e: "⏰", t: "Alarm clock",               ai: false, why: "It rings at the time you set. One rule, no learning." },
-    { e: "💬", t: "ChatGPT",                   ai: true,  why: "It learned patterns of language from a gigantic amount of text." },
-    { e: "🚦", t: "Traffic light timer",       ai: false, why: "Most switch on a fixed timer. (Some new 'smart' ones do use AI — trick question!)" },
-    { e: "🌍", t: "Google Translate",          ai: true,  why: "It learned to translate from millions of texts that exist in two languages." },
-    { e: "🚗", t: "Self-driving car",          ai: true,  why: "It learned to recognise roads, people and signs from millions of camera images." },
-    { e: "🌡️", t: "Thermostat",                ai: false, why: "IF colder than 20 °C THEN heat on. Pure rule." },
-    { e: "🤳", t: "Snapchat face filter",      ai: true,  why: "It finds your eyes, nose and mouth with a model trained on thousands of labelled faces." },
-    { e: "🔦", t: "Flashlight app",            ai: false, why: "Button pressed → light on. Nothing to learn." },
+  // 28 cards, 14 each side. A round deals 12 (6 + 6, at least 3 tricky), so
+  // the game stays snappy and every "New round" feels fresh.
+  // tricky: a card where the obvious answer is wrong or the line is subtle —
+  // these make the best class discussions.
+  const POOL = [
+    // ---------- AI: the behaviour was LEARNED from examples ----------
+    { e: "📧", t: "Spam filter",                      ai: true,  why: "It learned what spam looks like from millions of emails that people marked as spam." },
+    { e: "🎬", t: "Netflix / YouTube recommendations", ai: true,  why: "It learns from what you — and millions of people like you — watched, liked and skipped." },
+    { e: "🔓", t: "Face unlock",                       ai: true,  why: "A neural network, trained on huge numbers of faces, turns your face into numbers and checks they match the ones saved when you set it up." },
+    { e: "💬", t: "ChatGPT",                           ai: true,  why: "It learned the patterns of language from an enormous amount of text, then predicts the next word." },
+    { e: "🌍", t: "Google Translate",                  ai: true,  why: "It learned to translate from millions of texts that exist in two languages." },
+    { e: "🚗", t: "Self-driving car",                  ai: true,  why: "It learned to recognise roads, people and signs from millions of labelled camera images." },
+    { e: "🤳", t: "Snapchat face filter",              ai: true,  why: "It finds your eyes, nose and mouth with a model trained on thousands of faces labelled by people." },
+    { e: "🗣️", t: "Voice assistant (Siri, Alexa)",     ai: true,  why: "Turning your voice into words is speech recognition, learned from thousands of hours of recorded speech." },
+    { e: "💳", t: "Bank fraud alert",                  ai: true,  why: "It learned what normal and fraudulent payments look like from millions of past transactions — and flags the odd ones." },
+    { e: "🖼️", t: "Phone photo search: “dog”",         ai: true,  why: "An image model trained on millions of labelled photos recognises what is in yours — no one tagged them by hand." },
+    { e: "✍️", t: "Autocorrect & next-word suggestions", ai: true,  tricky: true, why: "Modern keyboards use a language model trained on lots of text (and your own typing) to guess the word you meant. Very old ones only used a dictionary." },
+    { e: "🕒", t: "Maps: “arrive in 23 min” in traffic", ai: true, tricky: true, why: "The arrival time is a prediction: it learned how traffic behaves from past journeys and live speeds of millions of phones." },
+    { e: "🏠", t: "Smart thermostat that learns your routine", ai: true, tricky: true, why: "It watches when you turn the heat up and down and learns your schedule — a basic thermostat can't." },
+    { e: "🧦", t: "Robot vacuum that dodges socks & cables", ai: true, tricky: true, why: "It recognises objects with a vision AI trained on photos of household clutter. (Simpler robot vacuums just bump and turn — rules.)" },
+
+    // ---------- NOT AI: the behaviour is RULES someone wrote ----------
+    { e: "🧮", t: "Calculator",                        ai: false, why: "Every button follows a rule a programmer wrote. 2 + 2 is never a guess." },
+    { e: "⏰", t: "Alarm clock",                       ai: false, why: "It rings at the time you set. One rule, nothing to learn." },
+    { e: "🔦", t: "Flashlight app",                    ai: false, why: "Button pressed → light on. Nothing to learn." },
+    { e: "🌡️", t: "Basic thermostat",                  ai: false, why: "IF colder than 20 °C THEN heat on. A pure rule — compare it with the smart one that learns." },
+    { e: "⏲️", t: "Microwave timer",                   ai: false, why: "Counts down the seconds you typed, then beeps. A fixed rule." },
+    { e: "🚪", t: "Automatic sliding door",            ai: false, why: "A sensor sees movement → the door opens. A rule wired in by an engineer." },
+    { e: "💡", t: "Motion-sensor light",               ai: false, tricky: true, why: "It feels “smart”, but it's one rule: movement detected → light on for 2 minutes." },
+    { e: "📊", t: "Spreadsheet SUM formula",           ai: false, why: "It adds the numbers exactly as the formula says. No examples, no learning." },
+    { e: "🔑", t: "Password check",                    ai: false, why: "It compares what you typed with what was stored. Match → in. That's a rule, not a guess." },
+    { e: "🚦", t: "Traffic light on a timer",          ai: false, tricky: true, why: "Most switch on a fixed timer. (Some cities now test AI-controlled lights — but a timer is just a rule.)" },
+    { e: "🎲", t: "Dice-rolling app",                  ai: false, tricky: true, why: "It picks a random number. Random is not intelligent — nothing is learned from data." },
+    { e: "🗺️", t: "GPS: shortest route on the map",    ai: false, tricky: true, why: "Finding the shortest path is a classic step-by-step algorithm on the road map — no learning needed. (Traffic predictions on top can be AI.)" },
+    { e: "👾", t: "Scripted video-game enemy",          ai: false, tricky: true, why: "Classic game enemies follow IF-THEN scripts written by designers. Gamers call it “game AI”, but it doesn't learn." },
+    { e: "📖", t: "Spell-check that underlines unknown words", ai: false, tricky: true, why: "It looks each word up in a dictionary list. Not found → red line. A lookup, not learning." },
   ];
+  const ROUND = 12;
+  let CARDS = [];
+  function deal() {
+    const pick = (ai) => {
+      const side = POOL.filter((c) => c.ai === ai);
+      const tricky = FX.shuffle(side.filter((c) => c.tricky)), plain = FX.shuffle(side.filter((c) => !c.tricky));
+      const nt = Math.min(tricky.length, 1 + Math.floor(Math.random() * 2));      // 1–2 tricky per side
+      return tricky.slice(0, nt).concat(plain.slice(0, ROUND / 2 - nt));
+    };
+    CARDS = FX.shuffle(pick(true).concat(pick(false)));
+  }
 
   const tray = document.getElementById("tray");
   const why = document.getElementById("why");
@@ -120,6 +156,7 @@
   function render() {
     tray.innerHTML = "";
     zones.forEach((z) => (z.querySelector(".cards").innerHTML = ""));
+    deal();
     score = 0; placed = 0; selected = null;
     updateScore();
     why.innerHTML = '<span class="muted">Drag each card into a box — or tap a card, then tap a box.</span>';
@@ -162,7 +199,7 @@
     if (placed === CARDS.length) {
       setTimeout(() => {
         FX.fireworks(1800);
-        why.innerHTML = `🏁 <b>${score} / ${CARDS.length}</b> — ${score >= 10 ? "AI expert! 🧠" : score >= 7 ? "Nice work! 👏" : "Tricky, right? That's the point. 😉"} &nbsp;The pattern: <b class="c1">AI learns from examples</b>, <b class="c3">normal programs follow rules</b>.`;
+        why.innerHTML = `🏁 <b>${score} / ${CARDS.length}</b> — ${score >= CARDS.length - 2 ? "AI expert! 🧠" : score >= CARDS.length * .6 ? "Nice work! 👏" : "Tricky, right? That's the point. 😉"} &nbsp;The pattern: <b class="c1">AI learns from examples</b>, <b class="c3">normal programs follow rules</b>.`;
       }, 400);
     }
   }

@@ -13,6 +13,7 @@ Run this. The camera permission and the venue wifi are the two things that bite.
 - [ ] Slide 15 (Object Detector, bonus): status shows **✅ Detector ready**; hold up a phone → it gets a box.
 - [ ] Slides 17–19 (Mood Reader, Mini ChatGPT, AI Doctor): each shows its data straight away (they are small files on the site).
 - [ ] Click **🐍 Python** on two or three slides: the code appears in colour. Click **▶ Run it in Colab** once to check the notebook opens.
+- [ ] Click **💡 Intuition** on one slide, then a 💡 inside an activity: both open full-screen over the slide; Esc closes.
 - [ ] Press **S**: the speaker view opens with notes and timings. (Allow pop-ups for the site if blocked.)
 
 ## T−1 day
@@ -39,5 +40,5 @@ Run this. The camera permission and the venue wifi are the two things that bite.
 | "Another app is using the camera" | Close Zoom/Teams/OBS, press Start again. |
 | Model "took too long" | Keep talking; it switches on by itself if it arrives. Otherwise skip to the next slide — the doodle trainer teaches the same idea offline. |
 | Build a Brain trains slowly | An old laptop without a graphics chip is slower. Lower Epochs to 1–2, or use "1 × 16". Press ⏹ Stop at any time — the brain keeps what it learned so far. |
-| Arrow keys do nothing | Click the slide title area, then use arrows/clicker. Close the 🐍 panel first (Esc). |
+| Arrow keys do nothing | Click the slide title area, then use arrows/clicker. Close the 🐍 / 💡 panel first (Esc). |
 | Everything looks unstyled | CDN blocked. Hotspot, reload. |

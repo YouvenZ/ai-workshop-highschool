@@ -249,18 +249,26 @@ body.play:not(.embedded) video.cam {
 .btn.py:hover { box-shadow: 0 0 22px rgba(255,212,59,.45); }
 body.play header.top .btn.py { margin-left: auto; }
 
-.pyp { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; padding: clamp(8px, 3vw, 40px); }
+/* Always fits the screen: the card is capped to the viewport (dvh, so mobile
+   browser bars count), header and footer stay put, and only the code scrolls.
+   (A grid row of "auto" made the old max-height:100% resolve to nothing, so a
+   long snippet pushed the close button off-screen.) */
+.pyp { position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; padding: clamp(8px, 3vw, 40px); }
 .pyp[hidden] { display: none; }
 .pyp-back { position: absolute; inset: 0; background: rgba(5,3,20,.72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); opacity: 0; transition: opacity .25s; }
 .pyp-card {
-  position: relative; width: min(1180px, 100%); max-height: 100%;
-  display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; gap: .9rem;
-  padding: clamp(14px, 2.2vw, 28px); background: rgba(21,15,58,.92);
-  font-size: clamp(14px, 1.15vw, 21px); color: var(--ink); text-align: left;
+  position: relative; width: min(1180px, 100%);
+  max-height: calc(100vh - 2 * clamp(8px, 3vw, 40px));
+  max-height: calc(100dvh - 2 * clamp(8px, 3vw, 40px));
+  display: flex; flex-direction: column; gap: .9rem; overflow: hidden;
+  padding: clamp(14px, 2.2vw, 28px); background: rgba(21,15,58,.94);
+  font-size: clamp(13px, min(1.15vw, 2.3vh), 21px); color: var(--ink); text-align: left;
   transform: translateY(30px) scale(.96); opacity: 0;
   transition: transform .35s cubic-bezier(.2,1.4,.4,1), opacity .25s;
   border-color: rgba(255,212,59,.45);
 }
+.pyp-head, .pyp-foot { flex: none; }
+.pyp-steps { flex: none; max-height: 30%; overflow: auto; }
 .pyp.show .pyp-back { opacity: 1; }
 .pyp.show .pyp-card { transform: none; opacity: 1; }
 .pyp-head { display: flex; gap: .9rem; align-items: center; }
@@ -284,7 +292,7 @@ body.play header.top .btn.py { margin-left: auto; }
 .pyp-steps li .n { display: grid; place-items: center; width: 1.6em; height: 1.6em; border-radius: 50%; background: rgba(255,212,59,.2); color: #ffd43b; }
 .pyp-steps li.on { border-color: #ffd43b; background: rgba(255,212,59,.14); box-shadow: 0 0 18px rgba(255,212,59,.35); }
 
-.pyp-code { min-height: 0; overflow: auto; border-radius: var(--radius-sm); background: #0b0822; border: 1px solid var(--stroke); }
+.pyp-code { flex: 1 1 auto; min-height: 6em; overflow: auto; overscroll-behavior: contain; border-radius: var(--radius-sm); background: #0b0822; border: 1px solid var(--stroke); }
 .pyp-code pre { margin: 0; padding: 1em 0; }
 .pyp-code code { display: block; font: 500 .92em/1.55 var(--font-mono); color: #e8e4ff; counter-reset: ln; tab-size: 4; }
 .pyp-code .ln {
@@ -314,6 +322,116 @@ body.play header.top .btn.py { margin-left: auto; }
 .pyp-pip { font-family: var(--font-mono); font-size: .85em; }
 @media (max-width: 640px) {
   .pyp { padding: 0; }
-  .pyp-card { border-radius: 0; height: 100%; }
+  .pyp-card { border-radius: 0; height: 100vh; height: 100dvh; max-height: none; }
   .pyp-code code { font-size: .78em; }
+  .pyp-head h2 { font-size: 1.35em; }
+}
+
+/* ---------- 💡 Intuition (js/intuition-panel.js) ---------- */
+.btn.intu {
+  background: linear-gradient(90deg, rgba(34,228,255,.22), rgba(182,255,59,.2));
+  border-color: var(--lime);
+}
+.btn.intu:hover { box-shadow: 0 0 22px rgba(182,255,59,.45); }
+body.play header.top .btn.intu { margin-left: auto; }
+body.play header.top .btn.intu + .btn.py { margin-left: 0; }
+
+/* the small 💡 next to an instruction */
+.ib {
+  all: unset; cursor: pointer; display: inline-grid; place-items: center;
+  width: 1.55em; height: 1.55em; margin-left: .45em; vertical-align: -.2em;
+  border-radius: 50%; font-size: .85em; line-height: 1;
+  background: rgba(182,255,59,.14); border: 1px solid rgba(182,255,59,.6);
+  box-shadow: 0 0 0 0 rgba(182,255,59,.55); animation: ib-pulse 2.8s ease-out infinite;
+  transition: transform .15s;
+}
+.ib:hover, .ib:focus-visible { transform: scale(1.18) rotate(-8deg); background: rgba(182,255,59,.3); }
+@keyframes ib-pulse { 0% { box-shadow: 0 0 0 0 rgba(182,255,59,.5); } 70%, 100% { box-shadow: 0 0 0 9px rgba(182,255,59,0); } }
+.ib-line { display: flex; align-items: center; gap: .1em; font-size: .85rem; font-weight: 600; color: var(--lime); cursor: pointer; margin-bottom: -.25rem; }
+.ib-line .ib { margin-left: 0; margin-right: .35em; }
+.ib.inline { align-self: center; margin-left: .1em; font-size: 1rem; }
+html.embedded .ib-line { font-size: .75rem; margin-bottom: -.45rem; }
+@media (prefers-reduced-motion: reduce) { .ib { animation: none; } }
+
+/* the panel — same robust sizing as the Python panel */
+.ip { position: fixed; inset: 0; z-index: 210; display: flex; align-items: center; justify-content: center; padding: clamp(8px, 2.5vw, 36px); }
+.ip[hidden] { display: none; }
+.ip-back { position: absolute; inset: 0; background: rgba(5,3,20,.74); backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px); opacity: 0; transition: opacity .25s; }
+.ip-card {
+  position: relative; width: min(1260px, 100%);
+  max-height: calc(100vh - 2 * clamp(8px, 2.5vw, 36px));
+  max-height: calc(100dvh - 2 * clamp(8px, 2.5vw, 36px));
+  display: flex; flex-direction: column; gap: .8rem; overflow: hidden;
+  padding: clamp(14px, 2vw, 26px); background: rgba(21,15,58,.95);
+  font-size: clamp(13px, min(1.1vw, 2.2vh), 20px); color: var(--ink); text-align: left;
+  border-color: rgba(182,255,59,.45);
+  transform: translateY(30px) scale(.96); opacity: 0;
+  transition: transform .35s cubic-bezier(.2,1.4,.4,1), opacity .25s;
+}
+.ip.show .ip-back { opacity: 1; }
+.ip.show .ip-card { transform: none; opacity: 1; }
+.ip-head { flex: none; display: flex; gap: .9rem; align-items: center; }
+.ip-emo { font-size: 2.5em; line-height: 1; filter: drop-shadow(0 0 16px rgba(182,255,59,.45)); }
+.ip-titles { flex: 1; min-width: 0; }
+.ip-kicker { margin: 0; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; font-size: .72em; color: var(--lime); }
+.ip-head h2 { margin: .05em 0 0; font-size: 1.65em; line-height: 1.1; }
+.ip-x { align-self: flex-start; flex: none; }
+
+.ip-nav { flex: none; display: flex; gap: .45rem; overflow-x: auto; padding-bottom: 2px; scrollbar-width: thin; }
+.ip-nav .chip {
+  all: unset; cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: .4em;
+  padding: .35em .85em .35em .5em; border-radius: 999px; font-weight: 600; font-size: .85em;
+  background: var(--glass-2); border: 1px solid var(--stroke); transition: background .2s, border-color .2s, box-shadow .2s;
+}
+.ip-nav .chip .n { display: grid; place-items: center; width: 1.5em; height: 1.5em; border-radius: 50%; background: rgba(182,255,59,.18); color: var(--lime); font-size: .9em; }
+.ip-nav .chip:hover { background: rgba(255,255,255,.16); }
+.ip-nav .chip.on { border-color: var(--lime); background: rgba(182,255,59,.14); box-shadow: 0 0 16px rgba(182,255,59,.3); }
+
+.ip-body { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 2px; }
+.ip-art svg { display: block; width: 100%; height: auto; max-height: 34vh; }
+.ip-art { border-radius: var(--radius-sm); background: radial-gradient(120% 120% at 50% 0%, rgba(139,92,255,.16), rgba(10,7,32,.6)); border: 1px solid var(--stroke); padding: .4em; }
+
+/* big picture: three illustrated cards */
+.ip-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+.ip-part {
+  display: flex; flex-direction: column; gap: .55rem; padding: 1rem; border-radius: var(--radius);
+  background: rgba(255,255,255,.05); border: 1px solid var(--stroke); border-top: 3px solid var(--col);
+  opacity: 0; transform: translateY(14px); animation: pyp-in .5s cubic-bezier(.2,1.4,.4,1) forwards;
+}
+.ip-part.how { animation-delay: .1s; } .ip-part.why { animation-delay: .2s; }
+.ip-tag { margin: 0; font-size: .72em; font-weight: 800; letter-spacing: .16em; color: var(--col); }
+.ip-part h3 { margin: 0; font-size: 1.12em; }
+.ip-part > p { margin: 0; line-height: 1.45; color: #ddd8f5; }
+.ip-list { list-style: none; margin: 0; padding: 0; display: grid; gap: .45rem; }
+.ip-list li { display: grid; grid-template-columns: auto 1fr; gap: .55em; align-items: start; line-height: 1.4; color: #ddd8f5;
+  opacity: 0; transform: translateX(-8px); animation: pyp-in .4s ease forwards; animation-delay: calc(.35s + var(--i) * .15s); }
+.ip-list .n { display: grid; place-items: center; width: 1.55em; height: 1.55em; border-radius: 50%; background: rgba(255,79,216,.2); color: var(--pink); font-weight: 700; font-size: .85em; }
+
+/* one step */
+.ip-step { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 1.2rem; align-items: start; }
+.ip-art.big svg { max-height: 52vh; }
+.ip-explain { display: grid; gap: .65rem; }
+.ip-steplabel { margin: 0; color: var(--muted); }
+.ip-steplabel b { color: var(--lime); font-family: var(--font-display); font-size: 1.15em; }
+.ip-explain section { padding: .7em .9em; border-radius: var(--radius-sm); background: rgba(255,255,255,.05); border-left: 3px solid var(--col);
+  opacity: 0; transform: translateX(10px); animation: pyp-in .45s ease forwards; }
+.ip-explain section.you { --col: var(--cyan); animation-delay: .05s; }
+.ip-explain section.ai  { --col: var(--pink); animation-delay: .18s; }
+.ip-explain section.why { --col: var(--amber); animation-delay: .31s; }
+.ip-explain h4 { margin: 0 0 .25em; font-family: var(--font-display); font-size: 1em; color: var(--col); }
+.ip-explain p { margin: 0; line-height: 1.45; }
+.ip-stepnav { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .2rem; }
+
+@media (max-width: 900px) {
+  .ip-grid { grid-template-columns: 1fr; }
+  .ip-step { grid-template-columns: 1fr; }
+  .ip-art svg { max-height: 30vh; }
+}
+@media (max-width: 640px) {
+  .ip { padding: 0; }
+  .ip-card { border-radius: 0; height: 100vh; height: 100dvh; max-height: none; }
+  .ip-head h2 { font-size: 1.3em; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ip-part, .ip-list li, .ip-explain section { animation: none; opacity: 1; transform: none; }
 }

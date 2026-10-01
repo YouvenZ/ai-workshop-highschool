@@ -1,6 +1,6 @@
 # Can a Computer Learn? — Workshop Plan
 
-**Presenter:** Dr. Rachid Zeghlache — Associate Professor of Artificial Intelligence, American University in Dubai
+**Presenter:** Dr. Rachid Zeghlache — Assistant Professor of Artificial Intelligence, American University in Dubai
 
 | | |
 |---|---|
@@ -20,6 +20,7 @@
 | **Never a dead screen** | Every activity has a fallback (sample image, photo upload, offline data). |
 | **Honest about limits** | Bias, hallucinations, "it only knows its data" and "which mistake is worse?" are shown live, not lectured. |
 | **The code is never hidden** | Every activity has a **🐍 Python** button: the same AI in 7–16 lines, every step explained, runnable in Colab. |
+| **The idea is never hidden either** | Every activity has a **💡 Intuition** button — three illustrated cards: *what* the AI does, *how* it works, *why* it matters — and a pulsing 💡 next to each instruction that explains that one step (what you do · what the AI does · why). |
 
 ## The shape of the hour
 
@@ -44,7 +45,7 @@ The bonus slides carry a 🎁 badge in their header.
 |---|---|---|---|---|---|
 | **0:00** | 1 | Title | — | Welcome; "in an hour you'll train seven AIs yourselves". | Energy. |
 | **0:01** | 2 | Who used AI today? | Hands up | Ask first, then reveal the four cards. | AI is everywhere, invisible. |
-| **0:03** | 3 | ⭐ **AI or Not?** | Drag & drop, 12 cards | Students come up or the room votes; read each explanation. | AI **learns from examples**; programs **follow rules**. |
+| **0:03** | 3 | ⭐ **AI or Not?** | Drag & drop, 12 cards per round from a deck of 28 (🔀 New round) | Students come up or the room votes; read each explanation. | AI **learns from examples**; programs **follow rules**. |
 | **0:08** | 4 | Rules vs learning | Animated diagram | Left panel, then click for the right. | ML flips it: data + answers → rules. |
 | **0:10** | 5 | AI ⊃ ML ⊃ DL | Nested circles | One ring per click. | The words, and how they nest. |
 | **0:11** | 6 | ⭐ **Teach the Computer** | KNN on a canvas | 1 cat + 1 dog → board splits. 🎲 starter data, hover. K=1 + 😈 weird one → island. K=7 → gone. | No one wrote the map. Change the examples, change the AI. |
@@ -69,6 +70,20 @@ The bonus slides carry a 🎁 badge in their header.
 | **0:58:30** | 25 | Every AI in a few lines of Python | 11 cards | Tap *Build a Brain* to show the code. | You can build these. Colab link. |
 | **0:59** | 26 | Keep playing | QR code | Leave it up while phones scan. | Where to go next. |
 | **1:00** | 27 | Thank you | Confetti | Questions; "what would you teach an AI?" | — |
+
+## 💡 Intuition
+
+Every activity slide has a **💡 Intuition** button next to 🐍 Python (and every
+activity page one in its header). It opens, full-screen in the deck:
+
+- **🗺️ What · How · Why** — three illustrated, animated cards;
+- one chip per step of the activity — the same explanations as the pulsing
+  💡 next to each instruction inside the activity: *🖐️ what you do ·
+  ⚙️ what the AI does · 💡 why it matters*, with ◀ ▶ to walk through them.
+
+All content lives in one file, `site/js/intuition-data.js` (36 step
+explanations, 31 illustrations). Use it when a student asks "but why?" — or
+leave it for the keen ones after class.
 
 ## 🐍 "Show me the Python"
 
